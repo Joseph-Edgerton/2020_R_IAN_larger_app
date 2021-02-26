@@ -1,0 +1,312 @@
+---
+title: "2020_R_IAN_larger_app"
+author: "Joseph Edgerton"
+date: "1/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r install packages}
+my_packages <- c("tidyverse", "GGally", "network", "here", "ggimage",
+                 "googlesheets4", "sna","gt", "shinyscreenshot")
+install.packages(my_packages, repos = "http://cran.rstudio.com")
+
+
+```
+
+
+```{r}
+install.packages("devtools")
+devtools::install_github("andrie/gcalendr")
+```
+
+
+```{r load packages}
+
+library(tidyverse)
+library(GGally)
+library(network)
+library(here)
+library(ggimage)
+library(googlesheets4)
+library(sna)
+library(gt)
+library(shiny)
+library(lubridate)
+library(shinyscreenshot)
+library(gcalendr)
+library(scales)
+```
+
+
+```{r test gcalendar}
+calendar_auth("jedgerton@umces.edu")
+
+my_cal_id <- "jedgerton@umces.edu"
+events <- calendar_events(my_cal_id, days_in_past = 0, days_in_future = 7)
+events
+
+events_clean <- events %>% 
+  select(summary, start_datetime, end_datetime) %>% 
+  mutate(name = "Joe")
+
+events_clean
+
+```
+
+```{r create time y-axis/table column}
+
+x <- interval(events_clean$start_datetime, events_clean$end_datetime, tz = "US/Eastern")
+
+x_tibble <- tibble(x)
+x_tibble
+```
+
+
+
+
+
+
+
+```{r}
+new_time <- seq(mdy_hms("02/01/2021 06:00:00", tz = "US/Eastern"), mdy_hms("02/01/2021 17:00:00", tz = "US/Eastern"), by = "15 min")
+
+
+time_object <- as_tibble(new_time)
+
+time_object <- time_object %>% 
+  filter(!(hour(value) > 17)) %>% 
+  filter(!(hour(value) == 17 & minute(value) == 45)) %>% 
+  filter(!(hour(value) == 17 & minute(value) == 30)) %>% 
+  filter(!(hour(value) == 17 & minute(value) == 15))
+
+time_object
+
+time_object_table <- int_diff(time_object$value)
+
+time_object_tibble <- tibble(time_object_table)
+  
+
+time_object_tibble <-  time_object_tibble %>% 
+  mutate(Joe = "")
+time_object_tibble
+#while this was a useful exercise to learn more about intervals, I think it's getting too complicated for my purpose
+
+```
+
+```{r}
+glimpse(time_object_tibble$time_object_table)
+glimpse(x_tibble$x)
+
+```
+
+
+
+
+```{r calendar table test}
+
+
+time_object_tibble %>%   
+  gt() %>% 
+  tab_style(
+    style = cell_fill(color = "cyan"),
+    locations = cells_body(
+      columns = vars(Joe),
+      rows = (time_object_tibble$time_object_table %within% x_tibble$x)))
+
+#######################################################
+#make a fake event coffee call 1 min to 29 min
+#findInterval function, which interval falls in another
+findInterval(1:8,c(0,3,6))
+#second vector, create hour breaks (gCalendar), in the first part put 15-min chunk
+?findInterval
+floor(-1.5) #other useful functions
+ceiling() 
+?floor()
+integer(1.5) 
+
+round(1.5)
+round(0.5)
+############################################################
+
+
+time_object_tibble %>%   
+  gt() %>% 
+  tab_style(
+    style = cell_fill(color = "cyan"),
+    locations = cells_body(
+      columns = vars(Joe),
+      rows = (findInterval(x_tibble$x, time_object_tibble$time_object_table))))
+
+
+
+
+##########################################
+time_object_tibble %>%   
+  gt() %>% 
+  tab_style(
+    style = cell_fill(color = "cyan"),
+    locations = cells_body(
+      columns = vars(Joe),
+      rows = lubridate::int_overlaps(time_object_tibble$time_object_table, x_tibble$x)))
+
+
+
+
+########################################################
+time_object_tibble %>%   
+  gt() %>% 
+  tab_style(
+    style = cell_fill(color = "cyan"),
+    locations = cells_body(
+      columns = vars(Joe),
+      rows = lubridate::intersect(time_object_tibble$time_object_table, x_tibble$x)))
+
+time_object_tibble$time_object_table %within%  x_tibble$x
+
+lubridate::int_overlaps(time_object_tibble$time_object_table, x_tibble$x)
+
+lubridate::`%within%`(time_object_tibble$time_object_table, x_tibble$x)
+
+#John from aggregate:
+#  A nice way to deal with gt() problem: cat(str_wrap(thanks, width = 40), "\n")
+
+```
+
+
+
+
+```{r stress graphs}
+
+scales::viridis_pal()(5)
+#[1] "#440154FF" "#3B528BFF" "#21908CFF" "#5DC863FF" "#FDE725FF"
+
+
+stress_tibble <- tibble(joe = 1, dylan = 7, alex = 18)
+
+stress_tibble_color <- stress_tibble %>% 
+  mutate(across(.cols = everything(), .fns = ~(case_when(.x %in% 0:4 ~ "#440154FF",
+                                                         .x %in% 5:8 ~"#3B528BFF",
+                                                         .x %in% 9:12 ~ "#21908CFF",
+                                                         .x %in% 13:16 ~ "#5DC863FF",
+                                                         .x %in% 17:20 ~ "#FDE725FF"))))
+
+stress_tibble_color
+
+
+#maybe use curvature -1, -0.5, 0, 0.5, 1 and write funciton to occur when the different colors occur
+
+#I think these curvature settings have enough differentiation to use
+
+
+p <- ggplot()
+p1 <- p + geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = stress_tibble_color$joe) +
+  geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = -1, size = 5,
+             color = "white", lineend = "round") +
+  
+  xlim(c(0,20)) + ylim(c(0,20))
+
+p1
+
+#Use separate plots for everyone, in shiny, use 
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###Junk
+
+
+```{r testing junk}
+time <- mdy_hms("1/29/2021 06:00:00") %--% mdy_hms("2/03/2021 17:00:00")
+
+time <- as.interval(time)
+
+time <- interval(mdy_hms("1/18/2021 06:00:00"), mdy_hms("1/22/2021 17:00:00"))
+
+dates <- time + hours(1:25)
+
+?hours
+
+int_diff(dates)
+```
+
+
+
+May be easier to do this with a graph (since continuous, vs. discrete table)
+
+```{r try continous graph instead}
+
+new_events_clean <- events_clean %>%
+  mutate(start_datetime = as.character(start_datetime)) %>% 
+  mutate(end_datetime = as.character(end_datetime)) %>% 
+  separate(start_datetime, into = c("date_s", "time_s"), sep = "\\s") %>% 
+  separate(end_datetime, into = c("date_e", "time_e"), sep = "\\s") %>% 
+  mutate(across(.cols = c(date_s, date_e), .fns = as_date)) %>% 
+  mutate(across(.cols = c(time_s, time_e), .fns = hms))
+
+new_events_clean
+
+p <- ggplot(data = new_events_clean, aes(x = person))
+p1 <- p + geom_rect(aes(xmin = person, xmax = person, ymin =time_e, ymax = time_s, fill = person)) + scale_y_time(breaks = date_breaks("1 hour"))
+
+p1
+
+?geom_rect()
+
+#nope, too aesthetically busy to be specific, I don't think this will work as a graph, going to use gt table
+```
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,232 @@
+---
+title: "2020_R_IAN_larger_app"
+author: "Joseph Edgerton"
+date: "1/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r install packages}
+my_packages <- c("tidyverse", "GGally", "network", "here", "ggimage",
+                 "googlesheets4", "sna","gt", "shinyscreenshot", "Rtools", "Rcpp")
+install.packages(my_packages, repos = "http://cran.rstudio.com")
+
+```
+
+
+```{r}
+install.packages("devtools")
+install.packages("Rtools")
+devtools::install_github("andrie/gcalendr")
+```
+
+
+```{r load packages}
+
+library(tidyverse)
+library(GGally)
+library(network)
+library(here)
+library(ggimage)
+library(googlesheets4)
+library(sna)
+library(gt)
+library(shiny)
+library(lubridate)
+library(shinyscreenshot)
+library(gcalendr)
+library(scales)
+```
+
+
+
+```{r getting real data from 1 user to work}
+calendar_auth("jedgerton@umces.edu")
+my_cal_id <- ("jedgerton@umces.edu")
+events_one <- calendar_events(my_cal_id, days_in_past = 0, days_in_future = 7)
+events_one <- events_one %>% 
+  mutate(name = "Joe")
+
+calendar_auth("joseph.h.edgerton@gmail.com")
+other_cal_id <- ("joseph.h.edgerton@gmail.com")
+events_two <- calendar_events(other_cal_id, days_in_past = 0, days_in_future = 7)
+events_two <- events_two %>% 
+  mutate(name = "Joe2")
+events_two
+
+
+all_events <- bind_rows(events_one,events_two)
+
+
+test_time_intervals <- int_diff(seq(mdy_hms("02/15/2021 06:00:00", tz = "US/Eastern"), mdy_hms("02/15/2021 17:00:00", tz = "US/Eastern"), by = "15 min"))
+
+test_time_intervals
+```
+
+
+```{r}
+final_events_from_calendar <- function(x){
+  (x %within% all_new_events_timezone$interval)
+}
+
+
+all_new_events <- all_events %>% 
+  select(start_datetime, end_datetime,start_timezone, end_timezone, name)
+
+
+all_new_events_timezone <- all_new_events %>% 
+  rowwise() %>% 
+  mutate(across(.cols = c(start_timezone, end_timezone),
+                .fns = ~(case_when(is.na(.x) == TRUE ~ "America/New_York", #setting NY default if #NA
+                                   is.na(.x) == FALSE ~ .x)))) %>% 
+  mutate(start_datetime = with_tz(start_datetime, tz = start_timezone)) %>% 
+  mutate(end_datetime = with_tz(end_datetime, tz = end_timezone)) %>% 
+  mutate(start_eastern_converted = with_tz(start_datetime, tz = "US/Eastern")) %>%
+  mutate(end_eastern_converted = with_tz(end_datetime, tz = "US/Eastern")) %>%
+  mutate(interval = interval(start_eastern_converted, end_eastern_converted,
+                          tz = "US/Eastern"))
+
+
+part_two_all_new <- all_new_events_timezone %>% 
+  mutate(interval_check = list(map(test_time_intervals, final_events_from_calendar))) %>%  
+  unnest_wider(interval_check) %>% 
+  rowwise() %>% 
+  mutate(final_sum = as.logical(sum(c_across(cols = tidyselect::starts_with("..."))))) %>% 
+  pivot_wider(names_from = name, values_from = name)
+
+part_two_all_new
+
+#need to fix lists, but thats pretty good for now [with two people or more,
+#need to figure out the path for unnesting lists, etc]
+
+
+ 
+
+
+
+ select(interval, Joe, Joe2, final_sum) %>% 
+# mutate(intervals = format(intervals,"%I:%M:%S %p")) %>% 
+  gt() %>% 
+  tab_style(
+    style = cell_fill(color = "cyan"),
+    locations = cells_body(
+      columns = vars(Joe),
+      rows =  final_sum == TRUE)
+    ) %>%  
+  tab_style(
+    style = cell_fill(color = "red"),
+    locations = cells_body(
+      columns = vars(Joe2),
+      rows =  final_sum == TRUE))
+
+
+```
+
+
+
+
+
+```{r try to create a system for adding people}
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+#potentially UTC issue
+#find way to tell computer to use the appropriate time
+#tell PC clock (windows) to set time to California (PST)
+#find approprtiate conversion from UTC
+
+
+
+###Testing changing the military time to an am/pm format, proving difficult
+```{r}
+###########
+
+#test_time_intervals_two <- int_diff(seq(format(mdy_hms("02/15/2021 06:00:00", tz = "US/Eastern"),
+#                                               "%I:%M",
+#                                        format(mdy_hms("02/15/2021 17:00:00", tz = "US/Eastern"),
+#                                        "%I:%M",by = "15 min"))))
+
+blah <- seq(mdy_hms("02/15/2021 06:00:00", tz = "US/Eastern"), mdy_hms("02/15/2021 17:00:00", tz = "US/Eastern"), by = "15 min")
+blah
+  
+format(blah, "%I:%M %p")
+
+int_diff(format(blah, "%I:%M %p"))
+
+##########
+
+test_time_intervals_two <- seq(format(mdy_hms("02/15/2021 06:00:00", format = "%m/%d/%Y %H:%M", tz = "US/Eastern"), "%I:%M %p"),format(mdy_hms("02/15/2021 17:00:00", format = "%m/%d/%Y %H:%M", tz = "US/Eastern"), "%I:%M %p"), by = "15 min")
+
+test_time_intervals_two
+
+############
+
+
+```
+
+
+
+
+
+
+
+
+###Other parts of app: Stress graph
+
+```{r stress graphs}
+
+scales::viridis_pal()(5)
+#[1] "#440154FF" "#3B528BFF" "#21908CFF" "#5DC863FF" "#FDE725FF"
+
+
+stress_tibble <- tibble(joe = 1, dylan = 7, alex = 18)
+
+stress_tibble_color <- stress_tibble %>% 
+  mutate(across(.cols = everything(), .fns = ~(case_when(.x %in% 0:4 ~ "#440154FF",
+                                                         .x %in% 5:8 ~"#3B528BFF",
+                                                         .x %in% 9:12 ~ "#21908CFF",
+                                                         .x %in% 13:16 ~ "#5DC863FF",
+                                                         .x %in% 17:20 ~ "#FDE725FF"))))
+
+stress_tibble_color
+
+
+#maybe use curvature -1, -0.5, 0, 0.5, 1 and write funciton to occur when the different colors occur
+
+#I think these curvature settings have enough differentiation to use
+
+
+p <- ggplot()
+p1 <- p + geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = stress_tibble_color$joe) +
+  geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = -1, size = 5,
+             color = "white", lineend = "round") +
+  
+  xlim(c(0,20)) + ylim(c(0,20))
+
+p1
+
+#Use separate plots for everyone, in shiny, use 
+
+```
+
+
+
+
+
