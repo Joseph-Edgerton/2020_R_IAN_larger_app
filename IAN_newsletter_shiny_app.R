@@ -47,7 +47,14 @@ shinyApp(ui = ui, server = server)
 
 
 
-strftime(seq(as.POSIXct('00:00', format = "%H:%M", tz = "UTC"), 
-           as.POSIXct(Sys.Date() + 1), by = '30 min'), format = "%I:%M %p", tz = "EST", usetz = TRUE)
+strftime(seq(as.POSIXct("02/28/2021 06:00:00", format = "%m%d%Y %H:%M:%S", tz = "UTC"), 
+           as.POSIXct("02/28/2021 17:00:00", format = "%m%d%Y %H:%M:%S", tz = "UTC"),
+           by = '30 min'), format = "%I:%M %p", tz = "EST", usetz = TRUE)
+
+
+x <- strftime(seq(as.POSIXct("06:00:00", format = "%H:%M:%S", tz = "EST"), 
+             as.POSIXct("17:00:00", format = "%H:%M:%S", tz = "EST"),
+             by = '30 min'), format = "%I:%M %p", tz = "EST", usetz = TRUE)
+
 
 
