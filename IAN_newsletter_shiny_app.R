@@ -13,6 +13,8 @@ library(lubridate)
 library(shinyscreenshot)
 library(gcalendr)
 library(scales)
+library(chron)
+library(glue)
 
 # Define UI
 ui <- fluidPage(
@@ -47,14 +49,24 @@ shinyApp(ui = ui, server = server)
 
 
 
-strftime(seq(as.POSIXct("02/28/2021 06:00:00", format = "%m%d%Y %H:%M:%S", tz = "UTC"), 
-           as.POSIXct("02/28/2021 17:00:00", format = "%m%d%Y %H:%M:%S", tz = "UTC"),
-           by = '30 min'), format = "%I:%M %p", tz = "EST", usetz = TRUE)
 
-
-x <- strftime(seq(as.POSIXct("06:00:00", format = "%H:%M:%S", tz = "EST"), 
+my_list <- strftime(seq(as.POSIXct("06:00:00", format = "%H:%M:%S", tz = "EST"), 
              as.POSIXct("17:00:00", format = "%H:%M:%S", tz = "EST"),
              by = '30 min'), format = "%I:%M %p", tz = "EST", usetz = TRUE)
 
+class(my_list)
 
+glue("{my_list[1]} - {my_list[2]}")
+
+glue("{my_list[i]} - {my_list[i+1]}") #I want to do this repeatedly 
+
+?sapply
+?seq_len
+
+my_list_fun <- function(x){
+  glue(". - .+1")
+}
+
+
+map(my_list, ~my_list_fun)
 
