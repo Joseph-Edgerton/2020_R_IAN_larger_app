@@ -16,14 +16,25 @@ library(scales)
 
 # Define UI
 ui <- fluidPage(
+  titlePanel("IAN Staff Newsletter with R"),
+  sidebarLayout(
+    sidebarPanel(
+      textInput("name", "What's your name?"),
+      selectInput("project", "What projects are you working on?", choices = cars,
+                  multiple = TRUE),
+      checkboxGroupInput("times_unavailable", "What times are you busy?", choices = cars
+      ),
+      textAreaInput("comments", "Comments", rows = 3),
+      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20)
+  ),
     mainPanel(
         tabsetPanel(
-            tabPanel("Plot", plotOutput("plot")),
-            tabPanel("Summary", verbatimTextOutput("summary")),
-            tabPanel("Table", tableOutput("table"))
+            tabPanel("Bill's Schedule", plotOutput("plot")),
+            tabPanel("Project network", verbatimTextOutput("summary")),
+            tabPanel("Stress and comments", tableOutput("table"))
         )
     )
-)
+))
 
 # Define server logic 
 server <- function(input, output) {
