@@ -11,9 +11,7 @@ library(gt)
 library(shiny)
 library(lubridate)
 library(shinyscreenshot)
-library(gcalendr)
 library(scales)
-library(chron)
 library(glue)
 
 # Define UI
@@ -21,13 +19,14 @@ ui <- fluidPage(
   titlePanel("IAN Staff Newsletter with R"),
   sidebarLayout(
     sidebarPanel(
-      textInput("name", "What's your name?"),
+      selectInput("name", "What's your name?", choices = cars),
       selectInput("project", "What projects are you working on?", choices = cars,
                   multiple = TRUE),
       checkboxGroupInput("times_unavailable", "What times are you busy?", choices = schedule_times$times
       ),
       textAreaInput("comments", "Comments", rows = 3),
-      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20)
+      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
+      actionButton("button", label = "Update", class = "btn-primary" )
   ),
     mainPanel(
         tabsetPanel(
