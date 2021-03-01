@@ -24,7 +24,7 @@ ui <- fluidPage(
       textInput("name", "What's your name?"),
       selectInput("project", "What projects are you working on?", choices = cars,
                   multiple = TRUE),
-      checkboxGroupInput("times_unavailable", "What times are you busy?", choices = cars
+      checkboxGroupInput("times_unavailable", "What times are you busy?", choices = schedule_times$times
       ),
       textAreaInput("comments", "Comments", rows = 3),
       sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20)
@@ -63,10 +63,10 @@ glue("{my_list[i]} - {my_list[i+1]}") #I want to do this repeatedly
 ?sapply
 ?seq_len
 
+
 my_list_fun <- function(x){
-  glue(". - .+1")
+  glue("{x} - {x}")
 }
 
-
-map(my_list, ~my_list_fun)
-
+schedule_times <-  tibble(times = unlist(map(.x = my_list, .f = my_list_fun)))
+schedule_times
