@@ -20,20 +20,29 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("name", "What's your name?", choices = cars),
+      selectInput("Mon", "Monday Availability?", choices = cars),
+      selectInput("Tue", "Tuesday Availability?", choices = cars),
+      selectInput("Wed", "Wednesday Availability?", choices = cars),
+      selectInput("Thu", "Thursday Availability?", choices = cars),
+      selectInput("Fri", "Friday Availability?", choices = cars),
       selectInput("project", "What projects are you working on?", choices = cars,
                   multiple = TRUE),
+      textAreaInput("comments", "Comments", rows = 3),
+      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
       selectInput("times_unavailable", "What times are you busy?", choices = schedule_times$times,
                   multiple = TRUE
       ),
-      textAreaInput("comments", "Comments", rows = 3),
-      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
       actionButton("button", label = "Update", class = "btn-primary" )
   ),
     mainPanel(
         tabsetPanel(
-            tabPanel("Schedule", tableOutput("schedule_table")),
+            tabPanel("Availability",
+                     selectInput("name", "What's your name?", choices = cars),
+                     selectInput("project", "What projects are you working on?", choices = cars),
+                     tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
-            tabPanel("Stress and comments", plotOutput("face_plot"))
+            tabPanel("Stress and comments", plotOutput("face_plot")),
+            tabPanel("Bill's Schedule", tableOutput("schedule_table"))
         )
     )
 ))
@@ -41,15 +50,27 @@ ui <- fluidPage(
 # Define server logic 
 server <- function(input, output) {
   
-#  observeEvent(input$button,{
+  push <- eventReactive(input$button,{
   
-#  names_table <- reactiveValues({
-#    schedule_times %>% 
-#      add_column(c(input$names))
-#  })
-  
+    Name <- reactiveValues(input$name)
+    Mon <- reactiveValues(input$mon)
+    Tue <- reactiveValues(input$tue)
+    Wed <-  reactiveValues(input$wed)
+    Thu <-  reactiveValues(input$thu)
+    Fri <- reactiveValues(input$fri)
     
- # })
+    avail_table <- tibble(Names = Name(),
+                          Monday = Mon(),
+                          Tuesday = Tue(),
+                          Wednesday = Wed(),
+                          Thursday = Thu(),
+                          Friday = Fri()) %>% 
+      gt() 
+    
+ })
+  output$availability_table <- renderTable(
+    avail_table
+    )
   output$schedule_table <- renderTable(schedule_times)  
 
 }
@@ -60,6 +81,16 @@ shinyApp(ui = ui, server = server)
 
 
 
+
+
+  
+
+
+
+names_table <- reactiveValues({
+  schedule_times %>% 
+    add_column(c(input$names))
+})
 
 
 
@@ -87,13 +118,17 @@ schedule_times <-  tibble(times = unlist(map(.x = my_list, .f = my_list_fun)))
 schedule_times
  
 
- gt() %>% 
-  tab_style(
-    style = cell_fill(color = "cyan"),
-    locations = cells_body(
-      columns = vars(Joe),
-      rows =  final_sum == TRUE)
-  )
+
+tab_style(
+  style = cell_fill(color = "cyan"),
+  locations = cells_body(
+    columns = vars(Name),
+    rows =  final_sum == TRUE)
+)
+
+
+
+
 
 
 
