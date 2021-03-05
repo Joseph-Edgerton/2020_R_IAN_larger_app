@@ -59,18 +59,19 @@ server <- function(input, output) {
     Thu <-  reactiveValues(input$thu)
     Fri <- reactiveValues(input$fri)
     
-    avail_table <- tibble(Names = Name(),
-                          Monday = Mon(),
-                          Tuesday = Tue(),
-                          Wednesday = Wed(),
-                          Thursday = Thu(),
-                          Friday = Fri()) %>% 
-      gt() 
+    availability_table$Names <- Name()
+    availability_table$Monday <- Mon()
+    availability_table$Tuesday <- Tue()
+    availability_table$Wednesday <- Wed()
+    availability_table$Thursday <- Thu()
+    availability_table$Friday <- Fri()
     
  })
+  
   output$availability_table <- renderTable(
-    avail_table
+    push()
     )
+  
   output$schedule_table <- renderTable(schedule_times)  
 
 }
@@ -80,11 +81,14 @@ shinyApp(ui = ui, server = server)
 
 
 
-
-
-
+availability_table <- tibble(Names = "",
+                      Monday = "",
+                      Tuesday = "",
+                      Wednesday = "",
+                      Thursday = "",
+                      Friday = "")
   
-
+avail_table
 
 
 names_table <- reactiveValues({
