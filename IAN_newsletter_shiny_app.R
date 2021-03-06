@@ -50,26 +50,30 @@ ui <- fluidPage(
 # Define server logic 
 server <- function(input, output) {
   
-  push <- eventReactive(input$button,{
+  values <- reactiveValues()
+  values$df <- data.frame(Name = character(),
+                          Monday = character(),
+                          Tuesday = character(),
+                          Wednesday = character(),
+                          Thrusday = character(),
+                          Friday = character())
   
-    Name <- reactiveValues(input$name)
-    Mon <- reactiveValues(input$mon)
-    Tue <- reactiveValues(input$tue)
-    Wed <-  reactiveValues(input$wed)
-    Thu <-  reactiveValues(input$thu)
-    Fri <- reactiveValues(input$fri)
+  
+    observeEvent(input$button,{
+      
+      new_row <- data.frame(Name = input$name,
+                            Monday = input$Mon,
+                            Tuesday = input$Tue,
+                            Wednesday = input$Wed,
+                            Thrusday = input$Thu,
+                            Friday = input$Fri)
+      
+      values$df <- rbind(values$df, new_row)
+    })
     
-    availability_table$Names <- Name()
-    availability_table$Monday <- Mon()
-    availability_table$Tuesday <- Tue()
-    availability_table$Wednesday <- Wed()
-    availability_table$Thursday <- Thu()
-    availability_table$Friday <- Fri()
-    
- })
   
   output$availability_table <- renderTable(
-    push()
+    values$df
     )
   
   output$schedule_table <- renderTable(schedule_times)  
@@ -131,22 +135,3 @@ tab_style(
 )
 
 
-ui <- fluidPage(
-  checkboxGroupInput("icons", "Choose icons:",
-                     choiceNames =
-                       list(icon("calendar"), icon("bed"),
-                            icon("cog"), icon("bug")),
-                     choiceValues =
-                       list("calendar", "bed", "cog", "bug")
-  ),
-  textOutput("txt")
-)
-
-server <- function(input, output, session) {
-  output$txt <- renderText({
-    icons <- paste(input$icons, collapse = ", ")
-    paste("You chose", icons)
-  })
-}
-
-shinyApp(ui, server)
