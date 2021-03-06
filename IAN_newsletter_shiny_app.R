@@ -20,6 +20,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("name", "What's your name?", choices = cars),
+      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
       selectInput("Mon", "Monday Availability?", choices = cars),
       selectInput("Tue", "Tuesday Availability?", choices = cars),
       selectInput("Wed", "Wednesday Availability?", choices = cars),
@@ -28,7 +29,6 @@ ui <- fluidPage(
       selectInput("project", "What projects are you working on?", choices = cars,
                   multiple = TRUE),
       textAreaInput("comments", "Comments", rows = 3),
-      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
       selectInput("times_unavailable", "What times are you busy?", choices = schedule_times$times,
                   multiple = TRUE
       ),
@@ -131,8 +131,22 @@ tab_style(
 )
 
 
+ui <- fluidPage(
+  checkboxGroupInput("icons", "Choose icons:",
+                     choiceNames =
+                       list(icon("calendar"), icon("bed"),
+                            icon("cog"), icon("bug")),
+                     choiceValues =
+                       list("calendar", "bed", "cog", "bug")
+  ),
+  textOutput("txt")
+)
 
+server <- function(input, output, session) {
+  output$txt <- renderText({
+    icons <- paste(input$icons, collapse = ", ")
+    paste("You chose", icons)
+  })
+}
 
-
-
-
+shinyApp(ui, server)
