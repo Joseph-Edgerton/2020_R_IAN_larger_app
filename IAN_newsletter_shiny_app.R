@@ -62,16 +62,17 @@ server <- function(input, output) {
     observeEvent(input$button,{
       
       if(input$name %in% values$df$Name){
-          values_input <- values$df %>%
-            filter(Name == input$name) %>% 
-            mutate(Monday = input$Mon,
-                   Tuesday = input$Tue,
-                   Wednesday = input$Wed,
-                   Thursday = input$Thu,
-                   Friday =  input$Fri)
-          values$df <- full_join(values$df,values_input, by = c("Name", "Monday",
-                                                                "Tuesday", "Wednesday",
-                                                                "Thursday", "Friday"))
+          values$df <- values$df %>%
+            mutate(Monday = case_when(Name == input$name ~ input$Mon,
+                                      Name != input$name ~ Monday),
+                   Tuesday = case_when(Name == input$name ~ input$Tue,
+                                       Name != input$name ~ Tuesday),
+                   Wednesday = case_when(Name == input$name ~ input$Wed,
+                                         Name != input$name ~ Wednesday),
+                   Thursday = case_when(Name == input$name ~ input$Thu,
+                                        Name != input$name ~ Thursday),
+                   Friday = case_when(Name == input$name ~ input$Fri,
+                                      Name != input$name ~ Friday))
       } else {
         new_row <- data.frame(Name = input$name,
                               Monday = input$Mon,
