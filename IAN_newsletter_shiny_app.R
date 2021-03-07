@@ -94,7 +94,7 @@ server <- function(input, output) {
   
   output$schedule_table <- renderTable(schedule_times)  
 
-}
+} 
 
 # Run the application 
 shinyApp(ui = ui, server = server)
