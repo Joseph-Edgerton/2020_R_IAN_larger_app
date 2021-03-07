@@ -55,20 +55,35 @@ server <- function(input, output) {
                           Monday = character(),
                           Tuesday = character(),
                           Wednesday = character(),
-                          Thrusday = character(),
+                          Thursday = character(),
                           Friday = character())
   
   
     observeEvent(input$button,{
       
-      new_row <- data.frame(Name = input$name,
-                            Monday = input$Mon,
-                            Tuesday = input$Tue,
-                            Wednesday = input$Wed,
-                            Thrusday = input$Thu,
-                            Friday = input$Fri)
+      if(input$name %in% values$df$Name){
+          values_input <- values$df %>%
+            filter(Name == input$name) %>% 
+            mutate(Monday = input$Mon,
+                   Tuesday = input$Tue,
+                   Wednesday = input$Wed,
+                   Thursday = input$Thu,
+                   Friday =  input$Fri)
+          values$df <- full_join(values$df,values_input, by = c("Name", "Monday",
+                                                                "Tuesday", "Wednesday",
+                                                                "Thursday", "Friday"))
+      } else {
+        new_row <- data.frame(Name = input$name,
+                              Monday = input$Mon,
+                              Tuesday = input$Tue,
+                              Wednesday = input$Wed,
+                              Thursday = input$Thu,
+                              Friday = input$Fri)
+        
+        values$df <- rbind(values$df, new_row)
+      }
       
-      values$df <- rbind(values$df, new_row)
+      
     })
     
   
@@ -134,4 +149,11 @@ tab_style(
     rows =  final_sum == TRUE)
 )
 
+
+
+& (input$Mon != values$df$Mon | 
+     input$Tue != values$df$Tue |
+     input$Wed != values$df$Wed |
+     input$Thu != values$df$Thr |
+     input$Fri != values$df$Fri))
 
