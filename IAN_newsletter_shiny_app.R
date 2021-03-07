@@ -14,8 +14,15 @@ library(shinyscreenshot)
 library(scales)
 library(glue)
 
+
+
+#theme
+low_stress <- bslib::bs_theme(bg = "#2E4053", fg = "#D4E6F1")
+high_stress <- bslib::bs_theme(bg = "#85929E", fg = "#D1F2EB")
+
 # Define UI
 ui <- fluidPage(
+  theme = low_stress,
   titlePanel("IAN Staff Newsletter with R"),
   sidebarLayout(
     sidebarPanel(
@@ -48,7 +55,7 @@ ui <- fluidPage(
 ))
 
 # Define server logic 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   values <- reactiveValues()
   values$df <- data.frame(Name = character(),
@@ -58,6 +65,15 @@ server <- function(input, output) {
                           Thursday = character(),
                           Friday = character())
   
+  
+  
+  observeEvent(input$button,{
+     session$setCurrentTheme(
+       if(input$stress %in% 1:10) low_stress else high_stress
+     )
+  })
+  
+
   
     observeEvent(input$button,{
       
@@ -87,6 +103,11 @@ server <- function(input, output) {
       
     })
     
+    
+    
+    
+    
+    
   
   output$availability_table <- renderTable(
     values$df
@@ -94,7 +115,7 @@ server <- function(input, output) {
   
   output$schedule_table <- renderTable(schedule_times)  
 
-} 
+}
 
 # Run the application 
 shinyApp(ui = ui, server = server)
