@@ -411,6 +411,10 @@ y <-  pmap(.l = list(stress_tibble_color$colors, stress_tibble_color$stress,
 
 y
 
+
+#I guess this leaves room in case it's easier to inout text within graphic, rather than beside it in #shiny
+
+
 ```
 
 
