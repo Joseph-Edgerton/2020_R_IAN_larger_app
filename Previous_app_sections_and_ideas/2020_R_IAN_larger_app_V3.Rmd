@@ -40,6 +40,7 @@ library(lubridate)
 library(shinyscreenshot)
 library(gcalendr)
 library(scales)
+library(patchwork)
 ```
 
 
@@ -227,6 +228,105 @@ p1
 ```
 
 
+```{r multiple}
+stress_tibble <- tibble(joe = 1, dylan = 7, alex = 18)
 
+stress_tibble <- stress_tibble %>% 
+  pivot_longer(cols = everything(),names_to = "name", values_to = "stress")
+
+
+stress_tibble_color <- stress_tibble %>% 
+  mutate(across(.cols = stress, .fns = ~(case_when(.x %in% 0:4 ~ "#440154FF",
+                                                         .x %in% 5:8 ~"#3B528BFF",
+                                                         .x %in% 9:12 ~ "#21908CFF",
+                                                         .x %in% 13:16 ~ "#5DC863FF",
+                                                         .x %in% 17:20 ~ "#FDE725FF")),
+                .names = "colors"))
+
+stress_tibble_color
+
+
+#maybe use curvature -1, -0.5, 0, 0.5, 1 and write funciton to occur when the different colors occur
+
+#I think these curvature settings have enough differentiation to use
+
+
+p <- ggplot(data = stress_tibble_color)
+p1 <- p + geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = stress_tibble_color$colors) +
+  geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = -1, size = 5,
+             color = "white", lineend = "round") +
+  
+  xlim(c(0,20)) + ylim(c(0,20)) + facet_wrap(~name)
+p1
+
+
+
+```
+
+```{r multiple patchwork}
+
+#need to figure out how to get stress table to go off of. Similar to before, but just don't show table this time.
+
+stress_tibble <- tibble(name = input$name, stress = input$stress)
+
+stress_tibble <- stress_tibble %>% 
+  pivot_longer(cols = everything(),names_to = "name", values_to = "stress")
+
+
+stress_tibble_color <- stress_tibble %>% 
+  mutate(across(.cols = stress, .fns = ~(case_when(.x %in% 0:4 ~ "#440154FF",
+                                                         .x %in% 5:8 ~"#3B528BFF",
+                                                         .x %in% 9:12 ~ "#21908CFF",
+                                                         .x %in% 13:16 ~ "#5DC863FF",
+                                                         .x %in% 17:20 ~ "#FDE725FF")),
+                .names = "colors"))
+
+stress_tibble_color
+
+
+#maybe use curvature -1, -0.5, 0, 0.5, 1 and write funciton to occur when the different colors occur
+
+#I think these curvature settings have enough differentiation to use
+
+curve_function <- function(x){
+  if (x %in% 0:4) return(-1)
+  if (x %in% 5:8) return(-0.5)
+  if (x %in% 9:12) return(0)
+  if (x %in% 13:16) return(0.5)
+  if (x %in% 17:20) return(1)
+}
+
+
+x <- map_dbl(stress_tibble_color$stress, curve_function)
+
+x
+
+
+
+# a = color
+# b = stress value
+
+
+my_plot_function <- function(a, b){
+  ggplot(data = stress_tibble_color) +
+  geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
+  geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
+             color = "white", lineend = "round") +
+    xlim(c(0,20)) + ylim(c(0,20))
+}
+
+
+y <-  map2(.x = stress_tibble_color$colors, .y = stress_tibble_color$stress, .f = ~my_plot_function(.x,.y))
+
+
+y
+
+
+
+```
 
 
