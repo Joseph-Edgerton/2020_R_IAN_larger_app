@@ -5,34 +5,36 @@ library(GGally)
 library(network)
 library(here)
 library(ggimage)
-library(googlesheets4)
 library(sna)
 library(gt)
 library(shiny)
 library(lubridate)
 library(shinyscreenshot)
 library(scales)
-library(glue)
 
 
 
 #theme
-low_stress <- bslib::bs_theme(bg = "#2E4053", fg = "#D4E6F1")
-high_stress <- bslib::bs_theme(bg = "#85929E", fg = "#D1F2EB")
+# low_stress <- bslib::bs_theme(bg = "#2E4053", fg = "#D4E6F1")
+# high_stress <- bslib::bs_theme(bg = "#85929E", fg = "#D1F2EB")
+# session$setCurrentTheme(
+#   if_else(input$stress %in% 0:10, low_stress, high_stress, missing = NULL)
+# )
+
 
 # Define UI
 ui <- fluidPage(
-  theme = low_stress,
   titlePanel("IAN Staff Newsletter with R"),
   sidebarLayout(
     sidebarPanel(
       selectInput("name", "What's your name?", choices = cars),
       sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
-      selectInput("Mon", "Monday Availability?", choices = cars),
-      selectInput("Tue", "Tuesday Availability?", choices = cars),
-      selectInput("Wed", "Wednesday Availability?", choices = cars),
-      selectInput("Thu", "Thursday Availability?", choices = cars),
-      selectInput("Fri", "Friday Availability?", choices = cars),
+      splitLayout(
+        radioButtons("Mon", "Mon", choices = 1:4),
+        radioButtons("Tue", "Tue", choices = 1:4),
+        radioButtons("Wed", "Wed", choices = 1:4),
+        radioButtons("Thu", "Thu", choices = 1:4),
+        radioButtons("Fri", "Fri", choices = 1:4)),
       selectInput("project", "What projects are you working on?", choices = cars,
                   multiple = TRUE),
       textAreaInput("comments", "Comments", rows = 3),
@@ -44,8 +46,9 @@ ui <- fluidPage(
     mainPanel(
         tabsetPanel(
             tabPanel("Availability",
-                     selectInput("name", "What's your name?", choices = cars),
-                     selectInput("project", "What projects are you working on?", choices = cars),
+                     splitLayout(
+                       selectInput("name_search", "What's your name?", choices = cars),
+                       selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
             tabPanel("Stress and comments", plotOutput("face_plot")),
@@ -64,31 +67,21 @@ server <- function(input, output, session) {
                           Wednesday = character(),
                           Thursday = character(),
                           Friday = character())
-  
-  
-  
-  observeEvent(input$button,{
-     session$setCurrentTheme(
-       if(input$stress %in% 1:10) low_stress else high_stress
-     )
-  })
-  
 
-  
     observeEvent(input$button,{
       
       if(input$name %in% values$df$Name){
           values$df <- values$df %>%
-            mutate(Monday = case_when(Name == input$name ~ input$Mon,
-                                      Name != input$name ~ Monday),
-                   Tuesday = case_when(Name == input$name ~ input$Tue,
-                                       Name != input$name ~ Tuesday),
-                   Wednesday = case_when(Name == input$name ~ input$Wed,
-                                         Name != input$name ~ Wednesday),
-                   Thursday = case_when(Name == input$name ~ input$Thu,
-                                        Name != input$name ~ Thursday),
-                   Friday = case_when(Name == input$name ~ input$Fri,
-                                      Name != input$name ~ Friday))
+            mutate(Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
+                                      Name != input$name ~ as.character(Monday)),
+                   Tuesday = case_when(Name %in% input$name ~ as.character(input$Tue),
+                                       Name != input$name ~ as.character(Tuesday)),
+                   Wednesday = case_when(Name %in% input$name ~ as.character(input$Wed),
+                                         Name != input$name ~ as.character(Wednesday)),
+                   Thursday = case_when(Name %in% input$name ~ as.character(input$Thu),
+                                        Name != input$name ~ as.character(Thursday)),
+                   Friday = case_when(Name %in% input$name ~ as.character(input$Fri),
+                                      Name != input$name ~ as.character(Friday)))
       } else {
         new_row <- data.frame(Name = input$name,
                               Monday = input$Mon,
@@ -99,6 +92,8 @@ server <- function(input, output, session) {
         
         values$df <- rbind(values$df, new_row)
       }
+      
+      
       
       
     })
@@ -119,6 +114,18 @@ server <- function(input, output, session) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -170,12 +177,4 @@ tab_style(
     columns = vars(Name),
     rows =  final_sum == TRUE)
 )
-
-
-
-& (input$Mon != values$df$Mon | 
-     input$Tue != values$df$Tue |
-     input$Wed != values$df$Wed |
-     input$Thu != values$df$Thr |
-     input$Fri != values$df$Fri))
 
