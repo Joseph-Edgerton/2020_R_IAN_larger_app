@@ -330,3 +330,50 @@ y
 ```
 
 
+
+```{r multiple plots detailed}
+
+curve_function <- function(x){
+  if (x %in% 0:4) return(-1)
+  if (x %in% 5:8) return(-0.5)
+  if (x %in% 9:12) return(0)
+  if (x %in% 13:16) return(0.5)
+  if (x %in% 17:20) return(1)
+}
+
+
+# a = color
+# b = stress value
+# c = name
+
+
+my_plot_function_v2 <- function(a, b, c){
+  ggplot(data = stress_tibble_color) +
+  geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
+  geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+  geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
+             color = "white", lineend = "round") +
+  geom_label(aes(x = 10, y = 19.5, label = c), size = 8, color = "blue",
+             label.padding = unit(0.5, "lines")) +
+    xlim(c(0,20)) + ylim(c(0,20))
+}
+
+
+y <-  pmap(.l = list(stress_tibble_color$colors, stress_tibble_color$stress,
+                     stress_tibble_color$name), .f = my_plot_function_v2)
+
+
+
+y
+
+
+
+
+```
+
+
+
+
+
+
