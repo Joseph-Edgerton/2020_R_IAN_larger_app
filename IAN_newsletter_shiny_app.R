@@ -62,17 +62,22 @@ server <- function(input, output, session) {
   
   values <- reactiveValues()
   values$df <- data.frame(Name = character(),
+                          Stress = double(),
                           Monday = character(),
                           Tuesday = character(),
                           Wednesday = character(),
                           Thursday = character(),
-                          Friday = character())
+                          Friday = character(),
+                          Project = character(),
+                          Comments = character())
 
     observeEvent(input$button,{
       
       if(input$name %in% values$df$Name){
           values$df <- values$df %>%
-            mutate(Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
+            mutate(Stress = case_when(Name %in% input$name ~ as.double(input$stress),
+                                      Name != input$name ~ as.double(Stress)),
+                   Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
                                       Name != input$name ~ as.character(Monday)),
                    Tuesday = case_when(Name %in% input$name ~ as.character(input$Tue),
                                        Name != input$name ~ as.character(Tuesday)),
@@ -81,17 +86,34 @@ server <- function(input, output, session) {
                    Thursday = case_when(Name %in% input$name ~ as.character(input$Thu),
                                         Name != input$name ~ as.character(Thursday)),
                    Friday = case_when(Name %in% input$name ~ as.character(input$Fri),
-                                      Name != input$name ~ as.character(Friday)))
+                                      Name != input$name ~ as.character(Friday)),
+                   Project = case_when(Name %in% input$name ~ as.character(input$project),
+                             Name != input$name ~ as.character(Project)),
+                   Comments = case_when(Name %in% input$name ~ as.character(input$comments),
+                                        Name != input$name ~ as.character(Comments)))
       } else {
         new_row <- data.frame(Name = input$name,
+                              Stress = input$stress,
                               Monday = input$Mon,
                               Tuesday = input$Tue,
                               Wednesday = input$Wed,
                               Thursday = input$Thu,
-                              Friday = input$Fri)
+                              Friday = input$Fri,
+                              Project = input$project,
+                              Comments = input$comments)
         
         values$df <- rbind(values$df, new_row)
       }
+      
+      
+      avail_table <- values$df %>% 
+        select(Name, Monday, Tuesday, Wednesday, Thursday, Friday)
+      
+      
+      
+      
+      
+      
       
       
       
@@ -105,7 +127,7 @@ server <- function(input, output, session) {
     
   
   output$availability_table <- renderTable(
-    values$df
+    avail_table
     )
   
   output$schedule_table <- renderTable(schedule_times)  
