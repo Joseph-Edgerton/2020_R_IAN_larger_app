@@ -62,7 +62,7 @@ server <- function(input, output, session) {
   
   values <- reactiveValues()
   values$df <- data.frame(Name = character(),
-                          Stress = double(),
+                          Stress = numeric(),
                           Monday = character(),
                           Tuesday = character(),
                           Wednesday = character(),
@@ -75,8 +75,8 @@ server <- function(input, output, session) {
       
       if(input$name %in% values$df$Name){
           values$df <- values$df %>%
-            mutate(Stress = case_when(Name %in% input$name ~ as.double(input$stress),
-                                      Name != input$name ~ as.double(Stress)),
+            mutate(Stress = case_when(Name %in% input$name ~ as.numeric(input$stress),
+                                      Name != input$name ~ as.numeric(Stress)),
                    Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
                                       Name != input$name ~ as.character(Monday)),
                    Tuesday = case_when(Name %in% input$name ~ as.character(input$Tue),
@@ -106,11 +106,10 @@ server <- function(input, output, session) {
       }
       
       
-      avail_table <- values$df %>% 
-        select(Name, Monday, Tuesday, Wednesday, Thursday, Friday)
       
+     
       
-      
+    
       
       
       
@@ -119,13 +118,57 @@ server <- function(input, output, session) {
     })
     
     
+    #stress
+    curve_function <- function(x){
+      if (x %in% 0:4) return(-1)
+      if (x %in% 5:8) return(-0.5)
+      if (x %in% 9:12) return(0)
+      if (x %in% 13:16) return(0.5)
+      if (x %in% 17:20) return(1)
+    }
+    
+    
+    # a = color
+    # b = stress value
+    # c = name
+    
+    
+    my_plot_function_v2 <- function(a, b, c){
+      ggplot(data = stress_tibble_color) +
+        geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
+        geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+        geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+        geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
+                   color = "white", lineend = "round") +
+        geom_label(aes(x = 10, y = 19.5, label = c), size = 8, color = "blue",
+                   label.padding = unit(0.5, "lines")) +
+        xlim(c(0,20)) + ylim(c(0,20)) +
+        theme_void()
+    }
+    
+    
+    y <-  pmap(.l = list(stress_tibble_color$colors, stress_tibble_color$stress,
+                         stress_tibble_color$name), .f = my_plot_function_v2)
+    
+    
+    
+    y
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
     
   
   output$availability_table <- renderTable(
-    avail_table
+    values$df
     )
   
   output$schedule_table <- renderTable(schedule_times)  
