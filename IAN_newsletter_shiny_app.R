@@ -14,6 +14,21 @@ library(scales)
 
 
 
+
+#testing data
+name_choices <- c("Annie Carew", "Kiri Carini", "Jennifer Clapper", "Simon Costanzo", "Bill Dennison",
+          "Kelly Dobroski", "Caroline Donovan", "Joe Edgerton", "Andrew Elmore", "Alex Fries",
+          "Steven Guinn", "Heath Kelsey", "Katie May Laumann", "Nathan Miller", "Emily Nastase",
+          "Crystal Nichols", "Trish Summers", "Sky Swanson", "Dylan Taillie", "Vanessa Vargas-Nguyen",
+          "Suzi Webster")
+
+
+avail_choices <- c("All", "AM", "PM", "Not")
+
+project_choices <- c("RioGRC", "CBRC", "DarHRC", "SEACAR", "GeorRC", "edX")
+
+
+
 #theme
 # low_stress <- bslib::bs_theme(bg = "#2E4053", fg = "#D4E6F1")
 # high_stress <- bslib::bs_theme(bg = "#85929E", fg = "#D1F2EB")
@@ -27,15 +42,15 @@ ui <- fluidPage(
   titlePanel("IAN Staff Newsletter with R"),
   sidebarLayout(
     sidebarPanel(
-      selectInput("name", "What's your name?", choices = cars),
+      selectInput("name", "What's your name?", choices = name_choices),
       sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
       splitLayout(
-        radioButtons("Mon", "Mon", choices = 1:4),
-        radioButtons("Tue", "Tue", choices = 1:4),
-        radioButtons("Wed", "Wed", choices = 1:4),
-        radioButtons("Thu", "Thu", choices = 1:4),
-        radioButtons("Fri", "Fri", choices = 1:4)),
-      selectInput("project", "What projects are you working on?", choices = cars,
+        radioButtons("Mon", "Mon", choices = avail_choices),
+        radioButtons("Tue", "Tue", choices = avail_choices),
+        radioButtons("Wed", "Wed", choices = avail_choices),
+        radioButtons("Thu", "Thu", choices = avail_choices),
+        radioButtons("Fri", "Fri", choices = avail_choices)),
+      selectInput("project", "What projects are you working on?", choices = project_choices,
                   multiple = TRUE),
       textAreaInput("comments", "Comments", rows = 3),
       selectInput("times_unavailable", "What times are you busy?", choices = schedule_times$times,
@@ -62,7 +77,7 @@ server <- function(input, output, session) {
   
   values <- reactiveValues()
   values$df <- data.frame(Name = character(),
-                          Stress = numeric(),
+                          Stress = integer(),
                           Monday = character(),
                           Tuesday = character(),
                           Wednesday = character(),
@@ -75,8 +90,8 @@ server <- function(input, output, session) {
       
       if(input$name %in% values$df$Name){
           values$df <- values$df %>%
-            mutate(Stress = case_when(Name %in% input$name ~ as.numeric(input$stress),
-                                      Name != input$name ~ as.numeric(Stress)),
+            mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
+                                      Name != input$name ~ as.integer(Stress)),
                    Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
                                       Name != input$name ~ as.character(Monday)),
                    Tuesday = case_when(Name %in% input$name ~ as.character(input$Tue),
@@ -87,10 +102,12 @@ server <- function(input, output, session) {
                                         Name != input$name ~ as.character(Thursday)),
                    Friday = case_when(Name %in% input$name ~ as.character(input$Fri),
                                       Name != input$name ~ as.character(Friday)),
-                   Project = case_when(Name %in% input$name ~ as.character(input$project),
+                   Project = case_when(Name %in% input$name ~ as.character(str_c(input$project, collapse = ", ")),
                              Name != input$name ~ as.character(Project)),
                    Comments = case_when(Name %in% input$name ~ as.character(input$comments),
-                                        Name != input$name ~ as.character(Comments)))
+                                        Name != input$name ~ as.character(Comments))) 
+            
+            
       } else {
         new_row <- data.frame(Name = input$name,
                               Stress = input$stress,
@@ -99,61 +116,83 @@ server <- function(input, output, session) {
                               Wednesday = input$Wed,
                               Thursday = input$Thu,
                               Friday = input$Fri,
-                              Project = input$project,
+                              Project = str_c(input$project, collapse = ", "),
                               Comments = input$comments)
+          
         
         values$df <- rbind(values$df, new_row)
       }
-      
-      
-      
-     
-      
-    
-      
-      
-      
-      
+
       
     })
     
     
-    #stress
-    curve_function <- function(x){
-      if (x %in% 0:4) return(-1)
-      if (x %in% 5:8) return(-0.5)
-      if (x %in% 9:12) return(0)
-      if (x %in% 13:16) return(0.5)
-      if (x %in% 17:20) return(1)
-    }
     
     
-    # a = color
-    # b = stress value
-    # c = name
+    #stress plots 
     
+    values <- reactiveValues()
+    values$df_face <- data.frame(Name = character(),
+                            Stress = integer(),
+                            Color = character()) 
     
-    my_plot_function_v2 <- function(a, b, c){
-      ggplot(data = stress_tibble_color) +
-        geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
-        geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
-        geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
-        geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
-                   color = "white", lineend = "round") +
-        geom_label(aes(x = 10, y = 19.5, label = c), size = 8, color = "blue",
-                   label.padding = unit(0.5, "lines")) +
-        xlim(c(0,20)) + ylim(c(0,20)) +
-        theme_void()
-    }
+    observeEvent(input$button,{
+      if(input$name %in% values$df$Name){
+      values$df_face <- values$df_face %>%
+        mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
+                                                     Name != input$name ~ as.integer(Stress)),
+               Color = case_when(Name %in% input$name ~ as.character(case_when(input$stress %in% 0:4 ~ "#440154FF",
+                                                                             input$stress %in% 5:8 ~"#3B528BFF",
+                                                                             input$stress %in% 9:12 ~ "#21908CFF",
+                                                                             input$stress %in% 13:16 ~ "#5DC863FF",
+                                                                             input$stress %in% 17:20 ~ "#FDE725FF")),
+                                 Name %in% input$name ~ as.character(Color)))
     
-    
-    y <-  pmap(.l = list(stress_tibble_color$colors, stress_tibble_color$stress,
-                         stress_tibble_color$name), .f = my_plot_function_v2)
-    
-    
-    
-    y
-    
+      } else {
+        new_row <- data.frame(Name = input$name,
+                              Stress = input$stress,
+                              Color = case_when(input$stress %in% 0:4 ~ "#440154FF",
+                                                input$stress %in% 5:8 ~"#3B528BFF",
+                                                input$stress %in% 9:12 ~ "#21908CFF",
+                                                input$stress %in% 13:16 ~ "#5DC863FF",
+                                                input$stress %in% 17:20 ~ "#FDE725FF"))
+        
+        
+        values$df_face <- rbind(values$df_face, new_row)
+      }
+      
+      #curve
+      curve_function <- function(x){
+        if (x %in% 0:4) return(-1)
+        if (x %in% 5:8) return(-0.5)
+        if (x %in% 9:12) return(0)
+        if (x %in% 13:16) return(0.5)
+        if (x %in% 17:20) return(1)
+      }
+      
+      
+      # a = color
+      # b = stress value
+      # c = name
+      
+      
+      my_plot_function_v2 <- function(a, b, c){
+        ggplot(data = stress_tibble_color) +
+          geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
+          geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
+          geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
+          geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
+                     color = "white", lineend = "round") +
+          geom_label(aes(x = 10, y = 19.5, label = c), size = 8, color = "blue",
+                     label.padding = unit(0.5, "lines")) +
+          xlim(c(0,20)) + ylim(c(0,20)) +
+          theme_void()
+      }
+      
+      
+      face_plotting <-  pmap(.l = list(values$df_face$Colors, values$df_face$Stress,
+                                       values$df_face$Name), .f = my_plot_function_v2)
+    })
     
     
     
@@ -171,6 +210,10 @@ server <- function(input, output, session) {
     values$df
     )
   
+  output$face_plot <- renderPlot(
+    face_plotting
+  )
+  
   output$schedule_table <- renderTable(schedule_times)  
 
 }
@@ -184,12 +227,20 @@ shinyApp(ui = ui, server = server)
 
 
 
+#cool features
+#with selectizeInput use , options = list(create = TRUE) to allow user to write own tags
 
 
 
 
+#Junk/old stuff
 
+summarise(Project = str_c(Project, collapse = ", "))
 
+%>% 
+  group_by(Stress, Monday, Tuesday, Wednesday, Thursday, Friday, Project, Comments) %>% 
+  summarise(Project = toString(Project)) %>% 
+  ungroup() #trying to figure out how to collapse rows
 
 
 availability_table <- tibble(Names = "",
@@ -240,4 +291,6 @@ tab_style(
     columns = vars(Name),
     rows =  final_sum == TRUE)
 )
+
+
 
