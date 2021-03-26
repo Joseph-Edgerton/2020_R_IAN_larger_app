@@ -53,9 +53,9 @@ ui <- fluidPage(
       selectInput("project", "What projects are you working on?", choices = project_choices,
                   multiple = TRUE),
       textAreaInput("comments", "Comments", rows = 3),
-      selectInput("times_unavailable", "What times are you busy?", choices = schedule_times$times,
-                  multiple = TRUE
-      ),
+      # selectInput("times_unavailable", "What times are you busy?", choices = schedule_times$times,
+      #             multiple = TRUE
+      # ),
       actionButton("button", label = "Update", class = "btn-primary" )
   ),
     mainPanel(
@@ -214,7 +214,7 @@ server <- function(input, output, session) {
     face_plotting
   )
   
-  output$schedule_table <- renderTable(schedule_times)  
+  # output$schedule_table <- renderTable(schedule_times)   # joe says this is worthless
 
 }
 
