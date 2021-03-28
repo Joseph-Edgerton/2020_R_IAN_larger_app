@@ -66,7 +66,7 @@ ui <- fluidPage(
                        selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
-            tabPanel("Stress and comments", plotOutput("face_plot")),
+            tabPanel("Stress and comments", uiOutput("face_plot")),
             tabPanel("Bill's Schedule", tableOutput("schedule_table"))
         )
     )
@@ -189,10 +189,23 @@ server <- function(input, output, session) {
           theme_void()
       }
       
-      
+      createUI <- function(x){
       face_plotting <-  pmap(.l = list(values$df_face$Colors, values$df_face$Stress,
                                        values$df_face$Name), .f = my_plot_function_v2)
-    })
+      renderPlot(face_plotting)
+      }
+    
+      output$face_plot <- renderUI({
+        plot_list <- req(values$df_face)
+        tagList(map(
+          plot_list,
+          ~ createUI(.)
+        ))
+      })
+      
+      
+      
+   })
     
     
     
@@ -210,9 +223,7 @@ server <- function(input, output, session) {
     values$df
     )
   
-  output$face_plot <- renderPlot(
-    face_plotting
-  )
+  
   
   # output$schedule_table <- renderTable(schedule_times)   # joe says this is worthless
 
