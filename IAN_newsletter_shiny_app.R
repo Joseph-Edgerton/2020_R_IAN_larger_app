@@ -67,10 +67,8 @@ ui <- fluidPage(
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
             tabPanel("Stress and comments", 
-              div(
-                id = "plot-container",
                 uiOutput(
-                outputId = "face_plot"))),
+                outputId = "face_plot")),
             tabPanel("Bill's Schedule", tableOutput("schedule_table"))
         )
     )
@@ -193,27 +191,48 @@ server <- function(input, output, session) {
           theme_void()
       }
       
-      createUI <- function(x){
-      face_plotting <-  pmap(.l = list(values$df_face$Colors, values$df_face$Stress,
-                                       values$df_face$Name), .f = my_plot_function_v2)
-      renderPlot(face_plotting)
-      }
-    
-      output$face_plot <- renderUI({
-        plot_list <- req(values$df_face)
-        tagList(map(
-          plot_list,
-          ~ createUI(.)
-        ))
-      })
-      
-      
-      
    })
     
+    #make graph list
+    graphs <- eventReactive(input$name,{
+      req(values$df_face)
+      
+      values$df_face %>% 
+        group_by(values$df_face$Name) %>% 
+        nest() %>% 
+        mutate(
+          graphs = pmap(.l = list(values$df_face$Colors, values$df_face$Stress,
+                                     values$df_face$Name), .f = ~my_plot_function_v2)
+        ) %>% 
+        arrange(values$df_face$Name) %>% 
+        pull(graphs)
+    })
     
+    #iwalk step
+    observeEvent(input$name, {
+      req(graphs())
+      
+      iwalk(graphs(), ~{
+        output_name <- paste0("plot", .y)
+        output[[output_name]] <- renderPlot(.x)
+      })
+    })
     
-    
+    output$face_plot <- renderUI({
+      req(graphs())
+      
+      plots_list <- imap(graphs(), ~{
+        tagList(
+          plotlyOutput(
+            outputId = paste0("plot_", .y)
+          ),
+          br()
+        )
+        
+      })
+      
+      tagList(plots_list)
+    })
     
     
     
@@ -235,8 +254,6 @@ server <- function(input, output, session) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
-
 
 
 
