@@ -66,7 +66,11 @@ ui <- fluidPage(
                        selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
-            tabPanel("Stress and comments", uiOutput("face_plot")),
+            tabPanel("Stress and comments", 
+              div(
+                id = "plot-container",
+                uiOutput(
+                outputId = "face_plot"))),
             tabPanel("Bill's Schedule", tableOutput("schedule_table"))
         )
     )
