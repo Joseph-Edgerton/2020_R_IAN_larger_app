@@ -133,14 +133,14 @@ server <- function(input, output, session) {
     
     #stress plots 
     
-    values <- reactiveValues()
-    values$df_face <- data.frame(Name = character(),
-                            Stress = integer(),
-                            Colors = character(),
-                            graphs = list()) 
+    #https://tbradley1013.github.io/2018/08/10/create-a-dynamic-number-of-ui-elements-in-shiny-with-purrr/
     
-    observeEvent(input$button,{
-      
+    # values <- reactiveValues()
+    # values$df_face <- data.frame() %>% 
+    #   add_column(graphs = NA)
+    
+   my_graphs <-  eventReactive(input$button,{
+      req(values$df)
       #function setup
       #curve
       curve_function <- function(x){
@@ -171,43 +171,43 @@ server <- function(input, output, session) {
       }
       
       #main
-      if(input$name %in% values$df_face$Name){
-      values$df_face <- values$df_face %>%
-        mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
-                                                     Name != input$name ~ as.integer(Stress)),
-               Colors = case_when(Name %in% input$name ~ as.character(case_when(input$stress %in% 0:4 ~ "#440154FF",
-                                                                             input$stress %in% 5:8 ~"#3B528BFF",
-                                                                             input$stress %in% 9:12 ~ "#21908CFF",
-                                                                             input$stress %in% 13:16 ~ "#5DC863FF",
-                                                                             input$stress %in% 17:20 ~ "#FDE725FF")),
-                                 Name != input$name ~ as.character(Color)),
-               graphs = case_when(Name %in% input$name ~ pmap(.l = list(values$df_face$Colors,
-                                                                                values$df_face$Stress,
-                                                                                values$df_face$Name),
-                                                                      .f = ~my_plot_function_v2)),
-                                  Name != input$Name ~ graphs)
+      values$df %>%
+        mutate(graphs = pmap(.l = list(case_when(Stress %in% 0:4 ~ "#440154FF",
+                                                                                          Stress %in% 5:8 ~"#3B528BFF",
+                                                                                          Stress %in% 9:12 ~ "#21908CFF",
+                                                                                          Stress %in% 13:16 ~ "#5DC863FF",
+                                                                                          Stress %in% 17:20 ~ "#FDE725FF"),
+                                                                                Stress,
+                                                                                Name),
+                                                                      .f = ~my_plot_function_v2)) %>%
+        pull(graphs)
+        
+        #,
+                                  # Name != input$Name ~ as.list(graphs)))
                
     
-      } else {
-        new_row <- data.frame(Name = input$name,
-                              Stress = input$stress,
-                              Colors = case_when(input$stress %in% 0:4 ~ "#440154FF",
-                                                input$stress %in% 5:8 ~"#3B528BFF",
-                                                input$stress %in% 9:12 ~ "#21908CFF",
-                                                input$stress %in% 13:16 ~ "#5DC863FF",
-                                                input$stress %in% 17:20 ~ "#FDE725FF"),
-                              graphs = pmap(.l = list(case_when(input$stress %in% 0:4 ~ "#440154FF",
-                                                                input$stress %in% 5:8 ~"#3B528BFF",
-                                                                input$stress %in% 9:12 ~ "#21908CFF",
-                                                                input$stress %in% 13:16 ~ "#5DC863FF",
-                                                                input$stress %in% 17:20 ~ "#FDE725FF"),
-                                                      input$Stress,
-                                                      input$Name),
-                                            .f = ~my_plot_function_v2))
-        
-        
-        values$df_face <- rbind(values$df_face, new_row)
-      }
+      # } else {
+      #   new_row <- data.frame(graphs = pmap(.l = list(case_when(input$stress %in% 0:4 ~ "#440154FF",
+      #                                              input$stress %in% 5:8 ~"#3B528BFF",
+      #                                              input$stress %in% 9:12 ~ "#21908CFF",
+      #                                              input$stress %in% 13:16 ~ "#5DC863FF",
+      #                                              input$stress %in% 17:20 ~ "#FDE725FF"),
+      #                                    input$stress,
+      #                                    input$name),
+      #                          .f = ~my_plot_function_v2))
+      #   
+      #   # graphs = pmap(.l = list(case_when(input$stress %in% 0:4 ~ "#440154FF",
+      #   #                                                         input$stress %in% 5:8 ~"#3B528BFF",
+      #   #                                                         input$stress %in% 9:12 ~ "#21908CFF",
+      #   #                                                         input$stress %in% 13:16 ~ "#5DC863FF",
+      #   #                                                         input$stress %in% 17:20 ~ "#FDE725FF"),
+      #   #                                               input$Stress,
+      #   #                                               input$Name),
+      #   #                                     .f = ~my_plot_function_v2)
+      #   
+      #   
+      #   values$df_face <- rbind(values$df_face, new_row)
+      # }
       
       
       
@@ -216,17 +216,19 @@ server <- function(input, output, session) {
     
     #iwalk step
     observeEvent(input$button, {
+      req(my_graphs())
       
-      iwalk(values$df_face$graphs, ~{
+      iwalk(my_graphs(), ~{
         output_name <- paste0("plot", .y)
-        output[[output_name]] <- renderPlot(.x)
+        output$output_name <- renderPlot(.x)
       })
     })
     
     #stress face plot output
     output$face_plot <- renderUI({
+      req(my_graphs())
       
-      plots_list <- imap(values$df_face$graphs, ~{
+      plots_list <- imap(my_graphs(), ~{
         tagList(
           plotOutput(
             outputId = paste0("plot_", .y)
