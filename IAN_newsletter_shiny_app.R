@@ -43,7 +43,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput("name", "What's your name?", choices = name_choices),
-      sliderInput("stress", "What is your stress level?", value = 10, min = 0, max = 20),
+      sliderInput("stress", "What is your stress level?", value = 10, min = 1, max = 20),
       splitLayout(
         radioButtons("Mon", "Mon", choices = avail_choices),
         radioButtons("Tue", "Tue", choices = avail_choices),
@@ -66,7 +66,6 @@ ui <- fluidPage(
                        selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
-            tabPanel("Stress and comments", plotOutput("face_plot")),
             tabPanel("Bill's Schedule", tableOutput("schedule_table"))
         )
     )
@@ -75,33 +74,33 @@ ui <- fluidPage(
 # Define server logic 
 server <- function(input, output, session) {
   
-  values <- reactiveValues()
-  values$df <- data.frame(Name = character(),
+  # values <- reactiveValues()
+  new_df <- data.frame(Name = character(),
                           Stress = integer(),
-                          Monday = character(),
-                          Tuesday = character(),
-                          Wednesday = character(),
-                          Thursday = character(),
-                          Friday = character(),
+                          Mon = character(),
+                          Tue = character(),
+                          Wed = character(),
+                          Thu = character(),
+                          Fri = character(),
                           Project = character(),
                           Comments = character())
 
     observeEvent(input$button,{
       
-      if(input$name %in% values$df$Name){
-          values$df <- values$df %>%
+      if(input$name %in% new_df$Name){
+          new_df <- new_df %>%
             mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
                                       Name != input$name ~ as.integer(Stress)),
-                   Monday = case_when(Name %in% input$name ~ as.character(input$Mon),
-                                      Name != input$name ~ as.character(Monday)),
-                   Tuesday = case_when(Name %in% input$name ~ as.character(input$Tue),
-                                       Name != input$name ~ as.character(Tuesday)),
-                   Wednesday = case_when(Name %in% input$name ~ as.character(input$Wed),
-                                         Name != input$name ~ as.character(Wednesday)),
-                   Thursday = case_when(Name %in% input$name ~ as.character(input$Thu),
-                                        Name != input$name ~ as.character(Thursday)),
-                   Friday = case_when(Name %in% input$name ~ as.character(input$Fri),
-                                      Name != input$name ~ as.character(Friday)),
+                   Mon = case_when(Name %in% input$name ~ as.character(input$Mon),
+                                      Name != input$name ~ as.character(Mon)),
+                   Tue = case_when(Name %in% input$name ~ as.character(input$Tue),
+                                       Name != input$name ~ as.character(Tue)),
+                   Wed = case_when(Name %in% input$name ~ as.character(input$Wed),
+                                         Name != input$name ~ as.character(Wed)),
+                   Thu = case_when(Name %in% input$name ~ as.character(input$Thu),
+                                        Name != input$name ~ as.character(Thu)),
+                   Fri = case_when(Name %in% input$name ~ as.character(input$Fri),
+                                      Name != input$name ~ as.character(Fri)),
                    Project = case_when(Name %in% input$name ~ as.character(str_c(input$project, collapse = ", ")),
                              Name != input$name ~ as.character(Project)),
                    Comments = case_when(Name %in% input$name ~ as.character(input$comments),
@@ -111,107 +110,203 @@ server <- function(input, output, session) {
       } else {
         new_row <- data.frame(Name = input$name,
                               Stress = input$stress,
-                              Monday = input$Mon,
-                              Tuesday = input$Tue,
-                              Wednesday = input$Wed,
-                              Thursday = input$Thu,
-                              Friday = input$Fri,
+                              Mon = input$Mon,
+                              Tue = input$Tue,
+                              Wed = input$Wed,
+                              Thu = input$Thu,
+                              Fri = input$Fri,
                               Project = str_c(input$project, collapse = ", "),
                               Comments = input$comments)
           
         
-        values$df <- rbind(values$df, new_row)
+        new_df <- rbind(new_df, new_row)
       }
 
       
     })
     
-    
-    
-    
-    #stress plots 
-    
-    values <- reactiveValues()
-    values$df_face <- data.frame(Name = character(),
-                            Stress = integer(),
-                            Color = character()) 
+
     
     observeEvent(input$button,{
-      if(input$name %in% values$df$Name){
-      values$df_face <- values$df_face %>%
-        mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
-                                                     Name != input$name ~ as.integer(Stress)),
-               Color = case_when(Name %in% input$name ~ as.character(case_when(input$stress %in% 0:4 ~ "#440154FF",
-                                                                             input$stress %in% 5:8 ~"#3B528BFF",
-                                                                             input$stress %in% 9:12 ~ "#21908CFF",
-                                                                             input$stress %in% 13:16 ~ "#5DC863FF",
-                                                                             input$stress %in% 17:20 ~ "#FDE725FF")),
-                                 Name %in% input$name ~ as.character(Color)))
+    req(new_df)
+
+  Name_exp <- new_df$Name
+  Proj_exp <- new_df$Project    
+      
+    edge <- tibble(from = Name_exp,
+                   to = Proj_exp)
     
-      } else {
-        new_row <- data.frame(Name = input$name,
-                              Stress = input$stress,
-                              Color = case_when(input$stress %in% 0:4 ~ "#440154FF",
-                                                input$stress %in% 5:8 ~"#3B528BFF",
-                                                input$stress %in% 9:12 ~ "#21908CFF",
-                                                input$stress %in% 13:16 ~ "#5DC863FF",
-                                                input$stress %in% 17:20 ~ "#FDE725FF"))
-        
-        
-        values$df_face <- rbind(values$df_face, new_row)
-      }
-      
-      #curve
-      curve_function <- function(x){
-        if (x %in% 0:4) return(-1)
-        if (x %in% 5:8) return(-0.5)
-        if (x %in% 9:12) return(0)
-        if (x %in% 13:16) return(0.5)
-        if (x %in% 17:20) return(1)
-      }
-      
-      
-      # a = color
-      # b = stress value
-      # c = name
-      
-      
-      my_plot_function_v2 <- function(a, b, c){
-        ggplot(data = stress_tibble_color) +
-          geom_point(aes(x = 10, y = 10), size = 100, shape = 21, fill = a) +
-          geom_point(aes(x = 8.5, y = 15), size = 10, shape = 21, fill = "white") +
-          geom_point(aes(x = 11.5, y = 15), size = 10, shape = 21, fill = "white") +
-          geom_curve(aes(x = 8.5, y = 8, xend = 11.5, yend = 8), curvature = curve_function(b), size = 5,
-                     color = "white", lineend = "round") +
-          geom_label(aes(x = 10, y = 19.5, label = c), size = 8, color = "blue",
-                     label.padding = unit(0.5, "lines")) +
-          xlim(c(0,20)) + ylim(c(0,20)) +
-          theme_void()
-      }
-      
-      
-      face_plotting <-  pmap(.l = list(values$df_face$Colors, values$df_face$Stress,
-                                       values$df_face$Name), .f = my_plot_function_v2)
+    edge <- edge %>% 
+      separate_rows(to, sep = ", ")
+    
+    
+    # unique_names <- tibble(vertex = unique(shiny_test$Name), type = "name")
+    # unique_projects <- tibble(vertex = unique(shiny_test$Project), type = "project")
+    # 
+    # node <- bind_rows(unique_names, unique_projects)
+    
+    net <- network(edge, vertex.attr = NULL,  matrix.type = "edgelist")
+    
+    
+    #make function to take input and match each project with a corresponding color
+    
+    
+    net %v% "color" = case_when(
+      net %v% "vertex.names" == "Annie Carew" ~ "grey",
+      net %v% "vertex.names" == "RioGRC" ~ "red",
+      net %v% "vertex.names" == "edX" ~ "red")
+    
+    
+    # names_of_peeps <- shiny_test$Name
+    # names_of_projects <- shiny_test$Project
+    # 
+    # net %v% "color" = case_when(
+    #   net %v% "vertex.names" %in% names_of_peeps ~ "red",
+    #   net %v% "vertex.names" %in% names_of_projects ~ "grey")
+    
+    # ?sample
+    
+    # x = names
+    # y = projects
+    
+    
+    demo_x_test <- ggnet2(net, label = FALSE, color = "color", layout.exp = 0.25,
+                          mode = "kamadakawai", layout.par = list(niter = 500)) +
+      guides(color = FALSE, size = FALSE)
+    
+    
+    #, layout.par = list(repulsion)
+    #ifelse(net %v% "color" != "grey", TRUE, FALSE)
+    
+    
+    demo_x_test$data <- demo_x_test$data %>% 
+      rename(Name = label)
+    #need to make the schedule info table to combine with the coordinate table
+    
+    
+    Mon_exp <- new_df$Mon
+    Tue_exp <- new_df$Tue
+    Wed_exp <- new_df$Wed
+    Thu_exp <- new_df$Thu
+    Fri_exp <-new_df$Fri
+    
+    df_1 <- tibble(Mon = Mon_exp,
+                   Tue = Tue_exp,
+                   Wed = Wed_exp,
+                   Thu = Thu_exp,
+                   Fri = Fri_exp,
+                   Name = Name_exp)
+    
+    
+    df_1 <- df_1 %>% 
+      mutate(across(.cols = c(Mon, Tue, Wed, Thu, Fri),
+                    .fns = ~case_when(.x == "All" ~ 1,
+                                      .x == "AM" ~ 2,
+                                      .x == "PM" ~ 6,
+                                      .x == "Not" ~ 4))) 
+    # mutate(image = case_when(Name == "Alex Fries" ~ here("data","AFries_headshot.jpg"),
+    #                          Name == "Annie Carew" ~ here("data","ACarew_headshot.jpg"),
+    #                          Name == "Bill Dennison" ~ here("data", "BDennsion_headshot.jpg"),
+    #                          Name == "Caroline Donovan" ~ here("data", "CDonovan_headshot.jpg"),
+    #                          Name == "Crystal Nichols" ~ here("data", "CNichols_headshot.png"),
+    #                          Name == "Dylan Taillie" ~ here("data","DTaillie_headshot.jpg"),
+    #                          Name == "Heath Kelsey" ~ here("data", "HKelsey_headshot.jpg"),
+    #                          Name == "Jennifer Clapper" ~ here("data", "JClapper_headshot.png"),
+    #                          Name == "Joe Edgerton" ~ here("data", "2020_formal_pic_for_UMCES_website.jpg"),
+    #                          Name == "Katie May Laumann" ~ here("data", "KMLaumann_headshot.jpg"),
+    #                          Name == "Nathan Miller" ~ here("data", "NMiller_headshot.jpg"),
+    #                          Name == "Sky Swanson" ~ here("data","SSwanson_headshot.png"),
+    #                          Name == "Trish Summers" ~ here("data", "TSummers_headshot.png"),
+    #                          Name == "Vanessa Vargas-Nguyen" ~ here("data", "VVargas-Nguyen_headshot.jpg"),
+    #                          Name == "Kelly Dobroski" ~ here("data", "JClapper_headshot.png")))
+    
+    
+    joined_df <- full_join(demo_x_test$data, df_1, by = "Name")
+    
+    p1 <- demo_x_test +
+      geom_point(data = joined_df, aes(x = x -0.05, y = y -0.08), size = 2,
+                 shape = joined_df$Mon) +
+      geom_point(data = joined_df, aes(x = x -0.025, y = y -0.08), size = 2,
+                 shape = joined_df$Tue) +
+      geom_point(data = joined_df,aes(x = x -0.0, y = y -0.08),size = 2,
+                 shape = joined_df$Wed) +
+      geom_point(data = joined_df,aes(x = x +0.025, y = y -0.08),size = 2,
+                 shape = joined_df$Thu) +
+      geom_point(data = joined_df,aes(x = x +0.05, y = y -0.08),size = 2,
+                 shape = joined_df$Fri) +
+      # geom_image(data = join_table_test_demo, aes(x = x, y = y, image = image), size = 0.06, asp = 1.5) +
+      geom_text(data = joined_df, aes(x = x, y = y,
+                                                 label = case_when(color != "grey" ~ Name)))
+    
+    p1
+    
     })
     
     
     
     
-    
-    
-    
-    
-    
-    
-    
+    greeting_tibble <- tibble(Hello = "Please enter information")
     
   
-  output$availability_table <- renderTable(
-    values$df
-    )
-  
+  output$availability_table <- render_gt(
+    if(is.null(new_df) == TRUE){
+      gt(greeting_tibble) 
+    } else {
+      gt(new_df) %>% 
+        cols_width(
+          vars(Comments) ~ px(300),
+          vars(Mon, Tue, Wed, Thu, Fri, Project) ~ px(60)
+        ) %>%
+        tab_options(
+          container.overflow.x = FALSE
+        ) %>% 
+        cols_align(
+          align = "left",
+          column = vars(Comments)
+        ) %>% 
+      tab_style(
+          style = list(
+            cell_text(weight = "bold")
+          ),
+          locations = cells_column_labels(everything())
+        ) %>%
+      tab_style(
+        style = list(cell_fill(color = "#3F7B52"),
+        cell_text(color = "white")),
+        locations = cells_body(
+          columns = vars(Stress),
+          rows =  Stress %in% 1:4)
+        ) %>% 
+      tab_style(
+        style = cell_fill(color = "#A2CF62"),
+        locations = cells_body(
+          columns = vars(Stress),
+          rows =  Stress %in% 5:8)
+        ) %>% 
+      tab_style(
+        style = cell_fill(color = "#FFE35C"),
+        locations = cells_body(
+          columns = vars(Stress),
+          rows =  Stress %in% 9:12)
+      ) %>%
+      tab_style(
+        style = cell_fill(color = "#F79447"),
+        locations = cells_body(
+          columns = vars(Stress),
+          rows =  Stress %in% 13:16)
+      ) %>%
+      tab_style(
+        style = list(cell_fill(color = "#EE3B3B"),
+                     cell_text(color = "white")),
+        locations = cells_body(
+          columns = vars(Stress),
+          rows =  Stress %in% 17:20)
+      )
+    }  
+  )      
+        
   output$face_plot <- renderPlot(
-    face_plotting
+    p1
   )
   
   # output$schedule_table <- renderTable(schedule_times)   # joe says this is worthless
