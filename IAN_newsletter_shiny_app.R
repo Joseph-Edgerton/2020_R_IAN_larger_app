@@ -74,8 +74,8 @@ ui <- fluidPage(
 # Define server logic 
 server <- function(input, output, session) {
   
-  # values <- reactiveValues()
-  new_df <- data.frame(Name = character(),
+  values <- reactiveValues()
+  values$df <- data.frame(Name = character(),
                           Stress = integer(),
                           Mon = character(),
                           Tue = character(),
@@ -87,8 +87,8 @@ server <- function(input, output, session) {
 
     observeEvent(input$button,{
       
-      if(input$name %in% new_df$Name){
-          new_df <- new_df %>%
+      if(input$name %in% values$df$Name){
+          values$df <- values$df %>%
             mutate(Stress = case_when(Name %in% input$name ~ as.integer(input$stress),
                                       Name != input$name ~ as.integer(Stress)),
                    Mon = case_when(Name %in% input$name ~ as.character(input$Mon),
@@ -119,7 +119,7 @@ server <- function(input, output, session) {
                               Comments = input$comments)
           
         
-        new_df <- rbind(new_df, new_row)
+        values$df <- rbind(values$df, new_row)
       }
 
       
@@ -128,13 +128,13 @@ server <- function(input, output, session) {
 
     
     observeEvent(input$button,{
-    req(new_df)
+    req(values$df)
 
-  Name_exp <- new_df$Name
-  Proj_exp <- new_df$Project    
+  Name_exp <- reactive({as.character(values$df$Name)})
+  Proj_exp <- reactive({as.character(values$df$Project)})    
       
-    edge <- tibble(from = Name_exp,
-                   to = Proj_exp)
+    edge <- tibble(from = Name_exp(),
+                   to = Proj_exp())
     
     edge <- edge %>% 
       separate_rows(to, sep = ", ")
@@ -184,18 +184,18 @@ server <- function(input, output, session) {
     #need to make the schedule info table to combine with the coordinate table
     
     
-    Mon_exp <- new_df$Mon
-    Tue_exp <- new_df$Tue
-    Wed_exp <- new_df$Wed
-    Thu_exp <- new_df$Thu
-    Fri_exp <-new_df$Fri
+    Mon_exp <- reactive({as.character(values$df$Mon)})
+    Tue_exp <- reactive({as.character(values$df$Tue)})
+    Wed_exp <- reactive({as.character(values$df$Wed)})
+    Thu_exp <- reactive({as.character(values$df$Thu)})
+    Fri_exp <- reactive({as.character(values$df$Fri)})
     
-    df_1 <- tibble(Mon = Mon_exp,
-                   Tue = Tue_exp,
-                   Wed = Wed_exp,
-                   Thu = Thu_exp,
-                   Fri = Fri_exp,
-                   Name = Name_exp)
+    df_1 <- tibble(Mon = Mon_exp(),
+                   Tue = Tue_exp(),
+                   Wed = Wed_exp(),
+                   Thu = Thu_exp(),
+                   Fri = Fri_exp(),
+                   Name = Name_exp())
     
     
     df_1 <- df_1 %>% 
@@ -223,7 +223,9 @@ server <- function(input, output, session) {
     
     joined_df <- full_join(demo_x_test$data, df_1, by = "Name")
     
-    p1 <- demo_x_test +
+    output$network_plot <- renderPlot(
+    
+    demo_x_test +
       geom_point(data = joined_df, aes(x = x -0.05, y = y -0.08), size = 2,
                  shape = joined_df$Mon) +
       geom_point(data = joined_df, aes(x = x -0.025, y = y -0.08), size = 2,
@@ -238,8 +240,7 @@ server <- function(input, output, session) {
       geom_text(data = joined_df, aes(x = x, y = y,
                                                  label = case_when(color != "grey" ~ Name)))
     
-    p1
-    
+    )
     })
     
     
@@ -249,10 +250,10 @@ server <- function(input, output, session) {
     
   
   output$availability_table <- render_gt(
-    if(is.null(new_df) == TRUE){
+    if(is.null(values$df) == TRUE){
       gt(greeting_tibble) 
     } else {
-      gt(new_df) %>% 
+      gt(values$df) %>% 
         cols_width(
           vars(Comments) ~ px(300),
           vars(Mon, Tue, Wed, Thu, Fri, Project) ~ px(60)
@@ -305,9 +306,9 @@ server <- function(input, output, session) {
     }  
   )      
         
-  output$face_plot <- renderPlot(
-    p1
-  )
+  # output$network_plot <- renderPlot(
+  #   p1
+  # )
   
   # output$schedule_table <- renderTable(schedule_times)   # joe says this is worthless
 
