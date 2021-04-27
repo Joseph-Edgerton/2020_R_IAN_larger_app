@@ -5,10 +5,10 @@ account: joseph-edgerton
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4017862
-bundleId: 4508215
+bundleId: 4523603
 url: https://joseph-edgerton.shinyapps.io/2020_R_IAN_larger_app/
-when: 1619155909.0735
-lastSyncTime: 1619155909.0735
+when: 1619501113.1741
+lastSyncTime: 1619501113.1741
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: .RData|Graveyard.R|Previous_app_sections_and_ideas/2020_R_IAN_larger_app.Rmd|Previous_app_sections_and_ideas/2020_R_IAN_larger_app_V2.Rmd|Previous_app_sections_and_ideas/2020_R_IAN_larger_app_V3.Rmd|README.md|test_git.R
