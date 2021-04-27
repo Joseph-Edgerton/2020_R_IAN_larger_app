@@ -20,12 +20,14 @@ name_choices <- c("Annie Carew", "Kiri Carini", "Jennifer Clapper", "Simon Costa
           "Kelly Dobroski", "Caroline Donovan", "Joe Edgerton", "Andrew Elmore", "Alex Fries",
           "Steven Guinn", "Heath Kelsey", "Katie May Laumann", "Nathan Miller", "Emily Nastase",
           "Crystal Nichols", "Trish Summers", "Sky Swanson", "Dylan Taillie", "Vanessa Vargas-Nguyen",
-          "Suzi Webster")
+          "Suzi Webster", "Ricky Arnold")
 
 
 avail_choices <- c("All", "AM", "PM", "Not")
 
-project_choices <- c("RioGRC", "CBRC", "DarHRC", "SEACAR", "GeorRC", "edX")
+project_choices <- c("RioGRC", "CBRC", "DarHRC", "SEACAR", "GeorRC", "edX", "KwanRC", "MissRC",
+                     "CGeoRC", "CAdaRC", "MDcbRC", "USGS", "NOAA", "CMC", "IANsup", "UMCES", "UofSC",
+                     "Unfund", "Class")
 
 
 
@@ -61,9 +63,9 @@ ui <- fluidPage(
     mainPanel(
         tabsetPanel(
             tabPanel("Availability",
-                     splitLayout(
-                       selectInput("name_search", "What's your name?", choices = cars),
-                       selectInput("project_search", "What projects are you working on?", choices = cars)),
+                     # splitLayout(
+                     #   selectInput("name_search", "What's your name?", choices = cars),
+                     #   selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
             tabPanel("Bill's Schedule", tableOutput("schedule_table"))
@@ -149,12 +151,58 @@ server <- function(input, output, session) {
     
     
     #make function to take input and match each project with a corresponding color
+    # name_choices <- c("Annie Carew", "Kiri Carini", "Jennifer Clapper", "Simon Costanzo", "Bill Dennison",
+    #                   "Kelly Dobroski", "Caroline Donovan", "Joe Edgerton", "Andrew Elmore", "Alex Fries",
+    #                   "Steven Guinn", "Heath Kelsey", "Katie May Laumann", "Nathan Miller", "Emily Nastase",
+    #                   "Crystal Nichols", "Trish Summers", "Sky Swanson", "Dylan Taillie", "Vanessa Vargas-Nguyen",
+    #                   "Suzi Webster")
     
+    # project_choices <- c("RioGRC", "CBRC", "DarHRC", "SEACAR", "GeorRC", "edX")
     
     net %v% "color" = case_when(
       net %v% "vertex.names" == "Annie Carew" ~ "grey",
-      net %v% "vertex.names" == "RioGRC" ~ "red",
-      net %v% "vertex.names" == "edX" ~ "red")
+      net %v% "vertex.names" == "Kiri Carini" ~ "grey",
+      net %v% "vertex.names" == "Jennifer Clapper" ~ "grey",
+      net %v% "vertex.names" == "Simon Costanzo" ~ "grey",
+      net %v% "vertex.names" == "Bill Dennison" ~ "grey",
+      net %v% "vertex.names" == "Kelly Dobroski" ~ "grey",
+      net %v% "vertex.names" == "Caroline Donovan" ~ "grey",
+      net %v% "vertex.names" == "Joe Edgerton" ~ "grey",
+      net %v% "vertex.names" == "Alex Fries" ~ "grey",
+      net %v% "vertex.names" == "Steven Guinn" ~ "grey",
+      net %v% "vertex.names" == "Heath Kelsey" ~ "grey",
+      net %v% "vertex.names" == "Katie May Laumann" ~ "grey",
+      net %v% "vertex.names" == "Nathan Miller" ~ "grey",
+      net %v% "vertex.names" == "Emily Nastase" ~ "grey",
+      net %v% "vertex.names" == "Crystal Nichols" ~ "grey",
+      net %v% "vertex.names" == "Trish Summers" ~ "grey",
+      net %v% "vertex.names" == "Sky Swanson" ~ "grey",
+      net %v% "vertex.names" == "Dylan Taillie" ~ "grey",
+      net %v% "vertex.names" == "Vanessa Vargas-Nguyen" ~ "grey",
+      net %v% "vertex.names" == "Suzi Webster" ~ "grey",
+      net %v% "vertex.names" == "Ricky Arnold" ~ "grey",
+      net %v% "vertex.names" == "RioGRC" ~ "tomato3",
+      net %v% "vertex.names" == "CBRC" ~ "skyblue",
+      net %v% "vertex.names" == "DarHRC" ~ "sandybrown",
+      net %v% "vertex.names" == "SEACAR" ~ "paleturquoise2",
+      net %v% "vertex.names" == "GeorRC" ~ "plum2",
+      net %v% "vertex.names" == "edX" ~ "lightgoldenrod2",
+      net %v% "vertex.names" == "KwanRC" ~ "aquamarine",
+      net %v% "vertex.names" == "MissRC" ~ "chartreuse2",
+      net %v% "vertex.names" == "CGeoRC" ~ "brown3",
+      net %v% "vertex.names" == "CAdaRC" ~ "lightsalmon1",
+      net %v% "vertex.names" == "MDcbRC" ~ "maroon",
+      net %v% "vertex.names" == "USGS" ~ "orangered2",
+      net %v% "vertex.names" == "NOAA" ~ "steelblue4",
+      net %v% "vertex.names" == "CMC" ~ "slateblue2",
+      net %v% "vertex.names" == "IANsup" ~ "thistle2",
+      net %v% "vertex.names" == "UMCES" ~ "royalblue4",
+      net %v% "vertex.names" == "UofSC" ~ "peachpuff2",
+      net %v% "vertex.names" == "Unfund" ~ "yellow2",
+      net %v% "vertex.names" == "Class" ~ "orange"
+      )
+    
+    
     
     
     # names_of_peeps <- shiny_test$Name
@@ -203,22 +251,28 @@ server <- function(input, output, session) {
                     .fns = ~case_when(.x == "All" ~ 1,
                                       .x == "AM" ~ 2,
                                       .x == "PM" ~ 6,
-                                      .x == "Not" ~ 4))) 
-    # mutate(image = case_when(Name == "Alex Fries" ~ here("data","AFries_headshot.jpg"),
-    #                          Name == "Annie Carew" ~ here("data","ACarew_headshot.jpg"),
-    #                          Name == "Bill Dennison" ~ here("data", "BDennsion_headshot.jpg"),
-    #                          Name == "Caroline Donovan" ~ here("data", "CDonovan_headshot.jpg"),
-    #                          Name == "Crystal Nichols" ~ here("data", "CNichols_headshot.png"),
-    #                          Name == "Dylan Taillie" ~ here("data","DTaillie_headshot.jpg"),
-    #                          Name == "Heath Kelsey" ~ here("data", "HKelsey_headshot.jpg"),
-    #                          Name == "Jennifer Clapper" ~ here("data", "JClapper_headshot.png"),
-    #                          Name == "Joe Edgerton" ~ here("data", "2020_formal_pic_for_UMCES_website.jpg"),
-    #                          Name == "Katie May Laumann" ~ here("data", "KMLaumann_headshot.jpg"),
-    #                          Name == "Nathan Miller" ~ here("data", "NMiller_headshot.jpg"),
-    #                          Name == "Sky Swanson" ~ here("data","SSwanson_headshot.png"),
-    #                          Name == "Trish Summers" ~ here("data", "TSummers_headshot.png"),
-    #                          Name == "Vanessa Vargas-Nguyen" ~ here("data", "VVargas-Nguyen_headshot.jpg"),
-    #                          Name == "Kelly Dobroski" ~ here("data", "JClapper_headshot.png")))
+                                      .x == "Not" ~ 4))) %>%  
+    mutate(image = case_when(Name == "Alex Fries" ~ here("data","AFries_headshot.jpg"),
+                             Name == "Annie Carew" ~ here("data","ACarew_headshot.jpg"),
+                             Name == "Andrew Elmore" ~ here("data","AElmore_headshot.jpg"),
+                             Name == "Bill Dennison" ~ here("data", "BDennsion_headshot.jpg"),
+                             Name == "Caroline Donovan" ~ here("data", "CDonovan_headshot.jpg"),
+                             Name == "Crystal Nichols" ~ here("data", "CNichols_headshot_1.png"),
+                             Name == "Dylan Taillie" ~ here("data","DTaillie_headshot.jpg"),
+                             Name == "Heath Kelsey" ~ here("data", "HKelsey_headshot.jpg"),
+                             Name == "Jennifer Clapper" ~ here("data", "JClapper_headshot_1.jpg"),
+                             Name == "Joe Edgerton" ~ here("data", "2020_formal_pic_for_UMCES_website.jpg"),
+                             Name == "Katie May Laumann" ~ here("data", "KMLaumann_headshot.jpg"),
+                             Name == "Nathan Miller" ~ here("data", "NMiller_headshot_1.jpg"),
+                             Name == "Ricky Arnold" ~ here("data", "RArnold_headshot.jpg"),
+                             Name == "Simon Costanzo" ~ here("data", "SCostanzo_headshot.jpg"),
+                             Name == "Steven Guinn" ~ here("data", "Steven Guinn_photo.jpg"),
+                             Name == "Sky Swanson" ~ here("data","SSwanson_headshot.png"),
+                             Name == "Suzi Webster" ~ here("data","SWebster_headshot.jpg"),
+                             Name == "Trish Summers" ~ here("data", "TSummers_headshot_1.jpg"),
+                             Name == "Vanessa Vargas-Nguyen" ~ here("data", "VVargas-Nguyen_headshot.jpg"),
+                             Name == "Kelly Dobroski" ~ here("data", "KDobroski_headshot.jpg")))
+    
     
     
     joined_df <- full_join(demo_x_test$data, df_1, by = "Name")
@@ -236,7 +290,7 @@ server <- function(input, output, session) {
                  shape = joined_df$Thu) +
       geom_point(data = joined_df,aes(x = x +0.05, y = y -0.08),size = 2,
                  shape = joined_df$Fri) +
-      # geom_image(data = join_table_test_demo, aes(x = x, y = y, image = image), size = 0.06, asp = 1.5) +
+      geom_image(data = joined_df, aes(x = x, y = y, image = image), size = 0.06, asp = 1.75) +
       geom_text(data = joined_df, aes(x = x, y = y,
                                                  label = case_when(color != "grey" ~ Name)))
     
