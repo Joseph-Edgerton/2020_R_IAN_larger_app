@@ -68,7 +68,8 @@ ui <- fluidPage(
                      #   selectInput("project_search", "What projects are you working on?", choices = cars)),
                      tableOutput("availability_table")),
             tabPanel("Project network", plotOutput("network_plot")),
-            tabPanel("Bill's Schedule", tableOutput("schedule_table"))
+            tabPanel("Bill's Schedule", textOutput("Bill_text"), 
+                     tableOutput("schedule_table"))
         )
     )
 ))
@@ -263,10 +264,11 @@ server <- function(input, output, session) {
                              Name == "Jennifer Clapper" ~ here("data", "JClapper_headshot_1.jpg"),
                              Name == "Joe Edgerton" ~ here("data", "2020_formal_pic_for_UMCES_website.jpg"),
                              Name == "Katie May Laumann" ~ here("data", "KMLaumann_headshot.jpg"),
+                             Name == "Kiri Carini" ~ here("data", "KCarini_headshot.jpeg"),
                              Name == "Nathan Miller" ~ here("data", "NMiller_headshot_1.jpg"),
                              Name == "Ricky Arnold" ~ here("data", "RArnold_headshot.jpg"),
                              Name == "Simon Costanzo" ~ here("data", "SCostanzo_headshot.jpg"),
-                             Name == "Steven Guinn" ~ here("data", "Steven Guinn_photo.jpg"),
+                             Name == "Steven Guinn" ~ here("data", "SGuinn_photo.jpg"),
                              Name == "Sky Swanson" ~ here("data","SSwanson_headshot.png"),
                              Name == "Suzi Webster" ~ here("data","SWebster_headshot.jpg"),
                              Name == "Trish Summers" ~ here("data", "TSummers_headshot_1.jpg"),
@@ -366,6 +368,14 @@ server <- function(input, output, session) {
   
   # output$schedule_table <- renderTable(schedule_times)   # joe says this is worthless
 
+
+  output$Bill_text <- renderText(
+    print("Bill is always available")
+  )  
+  
+  
+  
+  
 }
 
 # Run the application 
