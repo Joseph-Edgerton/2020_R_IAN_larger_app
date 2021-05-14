@@ -418,5 +418,131 @@ y
 ```
 
 
+```{r network for larger app}
 
+# observeEvent(input$button){}
+req(values$df)
+
+
+shiny_test <- tibble(Name = c("Alex", "Dylan", "Joe"), Project = c("a, b", "b, c", "c, a"))
+
+edge <- tibble(from = shiny_test$Name ,
+                         to = shiny_test$Project)
+
+edge <- edge %>% 
+  separate_rows(to, sep = ", ")
+
+
+edge
+
+
+# unique_names <- tibble(vertex = unique(shiny_test$Name), type = "name")
+# unique_projects <- tibble(vertex = unique(shiny_test$Project), type = "project")
+# 
+# node <- bind_rows(unique_names, unique_projects)
+
+net <- network(edge, vertex.attr = NULL,  matrix.type = "edgelist")
+
+net$val
+
+
+#make function to take input and match each project with a corresponding color
+
+
+net %v% "color" = case_when(
+  net %v% "vertex.names" == "a" ~ "red",
+  net %v% "vertex.names" == "b" ~ "red",
+  net %v% "vertex.names" == "c" ~ "red",
+  net %v% "vertex.names" == "Alex" ~ "grey",
+  net %v% "vertex.names" == "Dylan" ~ "grey",
+  net %v% "vertex.names" == "Joe" ~ "grey")
+
+
+# names_of_peeps <- shiny_test$Name
+# names_of_projects <- shiny_test$Project
+# 
+# net %v% "color" = case_when(
+#   net %v% "vertex.names" %in% names_of_peeps ~ "red",
+#   net %v% "vertex.names" %in% names_of_projects ~ "grey")
+                              
+# ?sample
+
+# x = names
+# y = projects
+
+
+
+
+net$val[[6]]
+                        
+set.seed(1)
+
+demo_x_test <- ggnet2(net, label = FALSE, color = "color", layout.exp = 0.25,
+                      mode = "kamadakawai", layout.par = list(niter = 500)) +
+  guides(color = FALSE, size = FALSE)
+
+
+#, layout.par = list(repulsion)
+#ifelse(net %v% "color" != "grey", TRUE, FALSE)
+
+
+demo_x_test$data <- demo_x_test$data %>% 
+  rename(Name = label)
+#need to make the schedule info table to combine with the coordinate table
+
+test_numbers <- tibble(Name = c("Alex", "Dylan", "Joe"),
+                       Mon = c("AM", "PM", "AM"),
+                       Tue = c("AM", "AM", "All"),
+                       Wed = c("Not", "PM", "All"),
+                       Thu = c("All", "Not", "All"),
+                       Fri = c("Not", "Not", "AM"))
+
+
+test_numbers <- test_numbers %>% 
+  mutate(across(.cols = c(Mon, Tue, Wed, Thu, Fri),
+                .fns = ~case_when(.x == "All" ~ 1,
+                        .x == "AM" ~ 2,
+                        .x == "PM" ~ 6,
+                        .x == "Not" ~ 4))) 
+  # mutate(image = case_when(Name == "Alex Fries" ~ here("data","AFries_headshot.jpg"),
+  #                          Name == "Annie Carew" ~ here("data","ACarew_headshot.jpg"),
+  #                          Name == "Bill Dennison" ~ here("data", "BDennsion_headshot.jpg"),
+  #                          Name == "Caroline Donovan" ~ here("data", "CDonovan_headshot.jpg"),
+  #                          Name == "Crystal Nichols" ~ here("data", "CNichols_headshot.png"),
+  #                          Name == "Dylan Taillie" ~ here("data","DTaillie_headshot.jpg"),
+  #                          Name == "Heath Kelsey" ~ here("data", "HKelsey_headshot.jpg"),
+  #                          Name == "Jennifer Clapper" ~ here("data", "JClapper_headshot.png"),
+  #                          Name == "Joe Edgerton" ~ here("data", "2020_formal_pic_for_UMCES_website.jpg"),
+  #                          Name == "Katie May Laumann" ~ here("data", "KMLaumann_headshot.jpg"),
+  #                          Name == "Nathan Miller" ~ here("data", "NMiller_headshot.jpg"),
+  #                          Name == "Sky Swanson" ~ here("data","SSwanson_headshot.png"),
+  #                          Name == "Trish Summers" ~ here("data", "TSummers_headshot.png"),
+  #                          Name == "Vanessa Vargas-Nguyen" ~ here("data", "VVargas-Nguyen_headshot.jpg"),
+  #                          Name == "Kelly Dobroski" ~ here("data", "JClapper_headshot.png")))
+
+
+join_table_test_demo <- full_join(demo_x_test$data, test_numbers, by = "Name")
+
+p1 <- demo_x_test +
+  geom_point(data = join_table_test_demo, aes(x = x -0.05, y = y -0.08), size = 2,
+             shape = join_table_test_demo$Mon) +
+  geom_point(data = join_table_test_demo, aes(x = x -0.025, y = y -0.08), size = 2,
+             shape = join_table_test_demo$Tue) +
+  geom_point(data = join_table_test_demo,aes(x = x -0.0, y = y -0.08),size = 2,
+             shape = join_table_test_demo$Wed) +
+  geom_point(data = join_table_test_demo,aes(x = x +0.025, y = y -0.08),size = 2,
+             shape = join_table_test_demo$Thu) +
+  geom_point(data = join_table_test_demo,aes(x = x +0.05, y = y -0.08),size = 2,
+             shape = join_table_test_demo$Fri) +
+  # geom_image(data = join_table_test_demo, aes(x = x, y = y, image = image), size = 0.06, asp = 1.5) +
+  geom_text(data = join_table_test_demo, aes(x = x, y = y,
+  label = case_when(color != "grey" ~ Name)))
+
+p1
+
+#ggsave(here("output", "IAN_network_ready_for_shiny_p1.png"), plot = p1, width = 7, height = 5, units = "in")
+
+
+
+```
 

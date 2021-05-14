@@ -1,0 +1,14 @@
+name: 2020_R_IAN_larger_app
+title: 2020_R_IAN_larger_app
+username:
+account: joseph-edgerton
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4017862
+bundleId: 4523651
+url: https://joseph-edgerton.shinyapps.io/2020_R_IAN_larger_app/
+when: 1619502324.4435
+lastSyncTime: 1619502324.4435
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|Graveyard.R|Previous_app_sections_and_ideas/2020_R_IAN_larger_app.Rmd|Previous_app_sections_and_ideas/2020_R_IAN_larger_app_V2.Rmd|Previous_app_sections_and_ideas/2020_R_IAN_larger_app_V3.Rmd|README.md|test_git.R
